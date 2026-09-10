@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Play — ROM Arcade</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%95%B9%EF%B8%8F%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/arcade.css">
+<style>
+    /* iOS Safari's toolbars overlay a `position:fixed; inset:0` element, which
+       would push the on-screen gamepad below the fold. --app-height is kept in
+       sync with visualViewport below; dvh is the modern fallback. */
+    body.player-page { height: 100vh; height: 100dvh; height: var(--app-height, 100dvh); }
+</style>
+</head>
+<body class="player-page">
+
+<div class="maint-strip" id="maint-strip" style="display:none">🚧 Maintenance mode is on — the arcade may be briefly unavailable.</div>
+<div class="player-bar">
+    <button class="btn btn-ghost" id="back">← Library</button>
+    <div class="title" id="playing">Loading…</div>
+    <span class="badge" id="playing-badge" style="display:none"></span>
+</div>
+<div id="display"><div id="game"></div></div>
+
+<script src="js/arcade.js"></script>
+<script>
+"use strict";
+
+/* --- Touch detection guard (from EmulatorJS 4.2.3 browser) ----------------
+   emulator.js computes hasTouchScreen from navigator.maxTouchPoints and can
+   short-circuit before the ontouchstart check, which breaks startup on some
+   touch devices. Correct maxTouchPoints BEFORE loader.js runs. */
+(function fixMaxTouchPoints() {
+    const coarse = window.matchMedia && window.matchMedia("(pointer:coarse)").matches;
+    const hasTouchEvents = ("ontouchstart" in window) || !!window.TouchEvent;
+    if (!coarse || !hasTouchEvents) return;
+    if (navigator.maxTouchPoints > 0) return;
+    try {
+        Object.defineProperty(navigator, "maxTouchPoints", {
+            get: function () { return 5; }, configurable: true
+        });
+    } catch (e) { /* read-only in some engines */ }
+})();
+
+/* --- Safari / older-browser guard -----------------------------------------
+   emulator.js calls MediaRecorder.isTypeSupported() unguarded; on browsers
+   without MediaRecorder that throws mid-startup. Install a stub. */
+if (typeof window.MediaRecorder === "undefined") {
+    window.MediaRecorder = function () {
+        throw new Error("MediaRecorder is not supported in this browser");
+    };
+    window.MediaRecorder.isTypeSupported = function () { return false; };
+    window.MediaRecorder.notSupportedShim = true;
+}
+
+const qs = new URLSearchParams(location.search);
+const DEBUG = qs.get("debug") === "1" || qs.get("debug") === "true";
+/* Threads only work when served with COOP/COEP headers (serve.py --coop-coep). */
+const THREADS = !!window.SharedArrayBuffer;
+
+function hash(str) {
+    let h = 0;
+    for (let i = 0; i < str.length; i++) h = (h * 31 + str.charCodeAt(i)) | 0;
+    return Math.abs(h) || 1;
+}
+
+function isTouchDevice() {
+    if (window.matchMedia) {
+        if (window.matchMedia("(pointer:coarse)").matches) return true;
+        if (window.matchMedia("(pointer:fine)").matches) return false;
+    }
+    return !!((("ontouchstart") in window) || (navigator.maxTouchPoints > 0));
+}
+
+function setAppHeight() {
+    const h = (window.visualViewport && window.visualViewport.height) || window.innerHeight;
+    document.documentElement.style.setProperty("--app-height", h + "px");
+}
+setAppHeight();
+window.addEventListener("resize", setAppHeight);
+window.addEventListener("orientationchange", function () { setTimeout(setAppHeight, 250); });
+if (window.visualViewport) {
+    window.visualViewport.addEventListener("resize", setAppHeight);
+    window.visualViewport.addEventListener("scroll", setAppHeight);
+}
+
+document.getElementById("back").addEventListener("click", function () {
+    if (history.length > 1) history.back();
+    else location.href = "index.html";
+});
+
+function showProblem(title, html) {
+    const display = document.getElementById("display");
+    display.innerHTML =
+        '<div class="player-problem"><div class="problem-card">' +
+        "<h2>" + esc(title) + "</h2>" + html +
+        "</div></div>";
+}
+
+let launched = false;
+function start(opts) {
+    if (launched) return;   // one EmulatorJS instance per page load
+    launched = true;
+    if (opts.gid) Arcade.recordPlay(opts.gid);
+
+    if ((opts.core === "psp" || opts.core === "dos") && !THREADS) {
+        alert(
+            (CONSOLES[opts.core] ? CONSOLES[opts.core].name : opts.core) +
+            " needs SharedArrayBuffer (threads). Start the site with:\n\n" +
+            "  python3 serve.py --coop-coep\n\nTrying anyway — it will most likely fail to boot."
+        );
+    }
+
+    const badge = document.getElementById("playing-badge");
+    document.getElementById("playing").textContent =
+        opts.name + "  ·  " + (CONSOLES[opts.core] ? CONSOLES[opts.core].name : opts.core);
+    if (CONSOLES[opts.core]) {
+        badge.textContent = CONSOLES[opts.core].short || opts.core;
+        badge.style.display = "";
+    }
+    document.title = opts.name + " — ROM Arcade";
+
+    window.EJS_player = "#game";
+    window.EJS_gameUrl = opts.url;
+    window.EJS_gameName = opts.name;
+    window.EJS_core = opts.core;
+    window.EJS_biosUrl = opts.bios || "";
+    window.EJS_pathtodata = "data/";
+    window.EJS_startOnLoaded = true;
+    window.EJS_threads = THREADS;
+    window.EJS_DEBUG_XX = DEBUG;
+    window.EJS_color = "#ffeb00";
+    /* Keep saves/states per game instead of everything sharing slot 1. */
+    window.EJS_gameID = hash(opts.name + "|" + opts.core);
+
+    /* On-screen gamepad fix: EJS_startOnLoaded bypasses the touch-triggering
+       "Start Game" button, so touch stays false and the pad never shows.
+       In-app browsers (a-Shell etc.) also fail EmulatorJS's isMobile UA
+       regex, which defaults the "virtual-gamepad" setting to disabled.
+       Force both, using the official settings API, and re-assert for the
+       first few seconds because some start paths hide the pad afterwards. */
+    function forceTouchControls(emu) {
+        if (!emu || !isTouchDevice()) return;
+        emu.touch = true;
+        try {
+            if (typeof emu.changeSettingOption === "function") {
+                emu.changeSettingOption("virtual-gamepad", "enabled");
+            }
+        } catch (e) { /* setting may not be registered yet */ }
+        if (emu.virtualGamepad) emu.virtualGamepad.style.display = "";
+    }
+    window.EJS_ready = function () {
+        forceTouchControls(window.EJS_emulator);
+    };
+    window.EJS_onGameStart = function () {
+        const emu = window.EJS_emulator;
+        if (!emu) return;
+        forceTouchControls(emu);
+        [250, 800, 1600, 3000].forEach(function (ms) {
+            setTimeout(function () {
+                if (emu.virtualGamepad) {
+                    const disabled = emu.getSettingValue &&
+                        emu.getSettingValue("virtual-gamepad") === "disabled";
+                    if (!disabled) emu.virtualGamepad.style.display = "";
+                }
+            }, ms);
+        });
+        setAppHeight();
+        setTimeout(function () { if (emu.handleResize) emu.handleResize(); }, 100);
+    };
+
+    const s = document.createElement("script");
+    s.src = "data/loader.js";
+    document.body.appendChild(s);
+}
+
+/* Show the core picker when a system is unknown or ambiguous.
+   `explicit` = the core was set on purpose (manifest / upload flow), so it
+   is trusted even for archive-type files. */
+async function resolveCore(fileLabel, core, explicit) {
+    if (core && explicit) return core;
+    const ambiguous = AMBIGUOUS.indexOf(extOf(fileLabel)) !== -1;
+    if (core && !ambiguous) return core;
+    return Arcade.pickCore(fileLabel, core);
+}
+
+(async function () {
+    Arcade.server = await probeServer();
+    await Arcade.loadState();
+    if (Arcade.isKilled()) { haltWithKillScreen(); return; }
+    const st = Arcade.getState();
+    if (st.privateMode && st.visitorPass && !Arcade.visitorUnlocked()) { visitorGate(); return; }
+    if (st.maintenance) $("#maint-strip").style.display = "";
+
+    const src = qs.get("src") || (qs.get("rom") ? "base" : "");
+    const fileId = qs.get("id");
+    const fileParam = qs.get("file") || qs.get("rom");
+
+    /* ---- browser-stored ROM (added locally, or one-shot "Open file") ---- */
+    if (src === "local" || src === "temp") {
+        const rec = await Arcade.idbGet(fileId).catch(function () { return null; });
+        if (!rec || !rec.blob) {
+            showProblem("ROM not found",
+                "<p>This game was stored in your browser and is no longer available.<br>" +
+                '<a class="btn btn-main" href="index.html" style="margin-top:14px">Back to the arcade</a></p>');
+            return;
+        }
+        const ov = Arcade.getState().overrides[rec.id] || {};
+        const core = await resolveCore(rec.file, ov.core || rec.core, !!(ov.core || rec.core));
+        if (!core) { location.href = "index.html"; return; }
+        /* EmulatorJS accepts a Blob directly as EJS_gameUrl (see toData()). */
+        start({
+            url: rec.blob,
+            name: ov.name || rec.name,
+            core: core,
+            bios: "",
+            gid: rec.temp ? null : rec.id
+        });
+        return;
+    }
+
+    /* ---- library ROM from roms/ ---- */
+    const base = await Arcade.loadBase();
+    const entry = base.find(function (g) { return g.file === fileParam; });
+    const fileName = fileParam || (entry && entry.file);
+
+    if (!fileName) {
+        showProblem("No game specified",
+            "<p>Open a game from the library, or use a link like<br>" +
+            "<code>play.html?src=base&amp;file=Game.nes</code></p>" +
+            '<a class="btn btn-main" href="index.html" style="margin-top:14px">Back to the arcade</a>');
+        return;
+    }
+
+    const exists = await Arcade.checkExists(fileName);
+    if (!exists) {
+        showProblem("“" + fileName + "” is not in the roms folder",
+            "<p>The library lists this game, but its file is missing.<br>Add the file below to play it.</p>" +
+            '<div id="fix-dz" class="dropzone"><span class="dz-icon">📂</span>' +
+            "<h3>Drop the ROM file here</h3>" +
+            "<p>It will be saved as <code>" + esc(fileName) + "</code> and the game will launch.</p></div>");
+        const dz = document.getElementById("fix-dz");
+        const input = document.createElement("input");
+        input.type = "file"; input.style.display = "none";
+        dz.appendChild(input);
+        dz.addEventListener("click", function () { input.click(); });
+        dz.addEventListener("dragover", function (e) { e.preventDefault(); dz.classList.add("drag"); });
+        dz.addEventListener("dragleave", function () { dz.classList.remove("drag"); });
+        async function fix(file) {
+            try {
+                let core = (entry && entry.core) || detectCore(file.name);
+                if (!core) core = await Arcade.pickCore(file.name, null);
+                if (!core) return;
+                const displayName = entry ? entry.name : nameFromFile(fileName);
+                if (Arcade.server && Arcade.server.api) {
+                    /* replace the missing file on disk under its listed name */
+                    const res = await fetch("api/upload?" + new URLSearchParams({
+                        file: fileName, core: core, name: displayName
+                    }), { method: "POST", body: file, headers: apiKeyHeaders() });
+                    if (!res.ok) throw new Error("server rejected the file (" + res.status + ")");
+                    location.reload();
+                } else {
+                    /* static host: keep it in the browser and play it straight away */
+                    start({ url: file, name: displayName, core: core, bios: "" });
+                }
+            } catch (err) {
+                Arcade.toast("Could not add file: " + (err && err.message), "err");
+            }
+        }
+        dz.addEventListener("drop", function (e) {
+            e.preventDefault(); dz.classList.remove("drag");
+            if (e.dataTransfer.files && e.dataTransfer.files[0]) fix(e.dataTransfer.files[0]);
+        });
+        input.addEventListener("change", function () {
+            if (input.files && input.files[0]) fix(input.files[0]);
+        });
+        return;
+    }
+
+    /* admin overrides (rename / re-console) win, then the manifest core,
+       then a guess from the extension (asking when ambiguous) */
+    const ov = Arcade.getState().overrides["b:" + fileName] || {};
+    let core = ov.core || (entry && entry.core) || detectCore(fileName);
+    core = await resolveCore(fileName, core, !!(ov.core || (entry && entry.core)));
+    if (!core) { location.href = "index.html"; return; }
+
+    start({
+        url: "roms/" + fileName.split("/").map(encodeURIComponent).join("/"),
+        name: ov.name || (entry ? entry.name : nameFromFile(fileName)),
+        core: core,
+        bios: entry && entry.bios ? "roms/" + entry.bios : "",
+        gid: "b:" + fileName
+    });
+})();
+</script>
+</body>
+</html>
