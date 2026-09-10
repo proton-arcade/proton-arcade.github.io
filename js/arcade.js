@@ -6,7 +6,10 @@
    · Add/remove works WITHOUT editing roms.json:
        - with serve.py running: real files are written via the JSON API
        - on any static host:    ROMs are kept in IndexedDB instead
-   · Kill switch state: server (.arcade-state.json) + localStorage fallback
+   · Admin state (kill switch, maintenance, private mode, featured games,
+     hidden consoles, name/core/box-art overrides, play counts, activity
+     log) lives in one store: serve.py keeps it server-side; static hosts
+     mirror it in localStorage.
    ========================================================================= */
 "use strict";
 
@@ -86,6 +89,8 @@ const EXT_CORE = {
 const AMBIGUOUS = ["bin", "cue", "img", "iso", "zip", "7z", "rar", "chd", "ccd", "mdf", "m3u", "toc"];
 
 const DEFAULT_PASS = "retro-kill-9F42";
+const STATE_KEY = "ra.state.v2";
+const LEGACY_STATE_KEYS = ["ra.killed", "ra.hidden", "ra.pass"];
 
 /* ---------------- tiny DOM helpers ---------------- */
 function $(sel, root) { return (root || document).querySelector(sel); }
@@ -103,6 +108,14 @@ function fmtSize(n) {
     let i = 0;
     while (n >= 1024 && i < units.length - 1) { n /= 1024; i++; }
     return (n < 10 && i > 0 ? n.toFixed(1) : Math.round(n)) + " " + units[i];
+}
+
+function fmtTime(t) {
+    try {
+        return new Date(t).toLocaleString(undefined, {
+            month: "short", day: "numeric", hour: "2-digit", minute: "2-digit"
+        });
+    } catch (e) { return String(t); }
 }
 
 function extOf(file) {
@@ -128,30 +141,48 @@ function debounce(fn, ms) {
 /* ---------------- global state ---------------- */
 const Arcade = {
     server: null,          // {api, killed, keyRequired} or null (static host)
+    state: null,           // admin state (see DEFAULT_STATE)
     _render: null,         // page refresh callback, run after any mutation
     _headCache: {},
+    _artCache: {},
     _db: null
 };
 
-/* ---------------- IndexedDB (browser-side ROM storage) ---------------- */
+const DEFAULT_STATE = {
+    killed: false,
+    maintenance: false,
+    privateMode: false,
+    visitorPass: "",
+    featured: [],
+    hiddenConsoles: [],
+    overrides: {},
+    plays: {},
+    log: []
+};
+
+/* ---------------- IndexedDB (browser-side ROM + art storage) ------------- */
 function idbOpen() {
     if (Arcade._db) return Promise.resolve(Arcade._db);
     return new Promise(function (resolve, reject) {
-        const req = indexedDB.open("rom-arcade", 1);
+        const req = indexedDB.open("rom-arcade", 2);
         req.onupgradeneeded = function () {
-            if (!req.result.objectStoreNames.contains("roms")) {
-                req.result.createObjectStore("roms", { keyPath: "id" });
-            }
+            const db = req.result;
+            if (!db.objectStoreNames.contains("roms")) db.createObjectStore("roms", { keyPath: "id" });
+            if (!db.objectStoreNames.contains("art")) db.createObjectStore("art", { keyPath: "key" });
         };
         req.onsuccess = function () { Arcade._db = req.result; resolve(req.result); };
         req.onerror = function () { reject(req.error || new Error("IndexedDB unavailable")); };
     });
 }
 
+function idbStore(name, mode) {
+    return idbOpen().then(function (db) { return db.transaction(name, mode).objectStore(name); });
+}
+
 function idbAll() {
-    return idbOpen().then(function (db) {
+    return idbStore("roms", "readonly").then(function (st) {
         return new Promise(function (resolve, reject) {
-            const r = db.transaction("roms").objectStore("roms").getAll();
+            const r = st.getAll();
             r.onsuccess = function () { resolve(r.result || []); };
             r.onerror = function () { reject(r.error); };
         });
@@ -159,9 +190,9 @@ function idbAll() {
 }
 
 function idbGet(id) {
-    return idbOpen().then(function (db) {
+    return idbStore("roms", "readonly").then(function (st) {
         return new Promise(function (resolve, reject) {
-            const r = db.transaction("roms").objectStore("roms").get(id);
+            const r = st.get(id);
             r.onsuccess = function () { resolve(r.result || null); };
             r.onerror = function () { reject(r.error); };
         });
@@ -169,10 +200,10 @@ function idbGet(id) {
 }
 
 function idbPut(rec) {
-    return idbOpen().then(function (db) {
+    return idbStore("roms", "readwrite").then(function (st) {
         return new Promise(function (resolve, reject) {
-            const tx = db.transaction("roms", "readwrite");
-            tx.objectStore("roms").put(rec);
+            const tx = st.transaction;
+            st.put(rec);
             tx.oncomplete = function () { resolve(rec); };
             tx.onerror = function () { reject(tx.error); };
         });
@@ -180,10 +211,10 @@ function idbPut(rec) {
 }
 
 function idbDel(id) {
-    return idbOpen().then(function (db) {
+    return idbStore("roms", "readwrite").then(function (st) {
         return new Promise(function (resolve, reject) {
-            const tx = db.transaction("roms", "readwrite");
-            tx.objectStore("roms").delete(id);
+            const tx = st.transaction;
+            st.delete(id);
             tx.oncomplete = function () { resolve(); };
             tx.onerror = function () { reject(tx.error); };
         });
@@ -191,12 +222,33 @@ function idbDel(id) {
 }
 
 function idbClear() {
-    return idbOpen().then(function (db) {
+    return idbStore("roms", "readwrite").then(function (st) {
         return new Promise(function (resolve, reject) {
-            const tx = db.transaction("roms", "readwrite");
-            tx.objectStore("roms").clear();
+            const tx = st.transaction;
+            st.clear();
             tx.oncomplete = function () { resolve(); };
             tx.onerror = function () { reject(tx.error); };
+        });
+    });
+}
+
+function idbPutArt(rec) {
+    return idbStore("art", "readwrite").then(function (st) {
+        return new Promise(function (resolve, reject) {
+            const tx = st.transaction;
+            st.put(rec);
+            tx.oncomplete = function () { resolve(rec); };
+            tx.onerror = function () { reject(tx.error); };
+        });
+    });
+}
+
+function idbGetArt(key) {
+    return idbStore("art", "readonly").then(function (st) {
+        return new Promise(function (resolve, reject) {
+            const r = st.get(key);
+            r.onsuccess = function () { resolve(r.result || null); };
+            r.onerror = function () { reject(r.error); };
         });
     });
 }
@@ -227,25 +279,94 @@ function apiKeyHeaders() {
     return h;
 }
 
-/* ---------------- kill switch ---------------- */
-function isKilled() {
-    if (Arcade.server && Arcade.server.killed) return true;
-    return localStorage.getItem("ra.killed") === "1";
+/* ---------------- admin state store ---------------- */
+function loadState() {
+    function normalize(obj) {
+        const s = Object.assign({}, DEFAULT_STATE);
+        if (obj && typeof obj === "object") {
+            Object.keys(DEFAULT_STATE).forEach(function (k) {
+                if (obj[k] !== undefined) s[k] = obj[k];
+            });
+        }
+        return s;
+    }
+    if (Arcade.server && Arcade.server.api) {
+        return fetch("api/state", { cache: "no-store" }).then(function (res) {
+            if (!res.ok) throw new Error("state unavailable");
+            return res.json();
+        }).then(function (data) {
+            Arcade.state = normalize(data);
+            return Arcade.state;
+        }).catch(function () {
+            Arcade.state = normalize(null);
+            return Arcade.state;
+        });
+    }
+    let local = null;
+    try { local = JSON.parse(localStorage.getItem(STATE_KEY) || "null"); } catch (e) { local = null; }
+    Arcade.state = normalize(local);
+    /* migrate legacy flags from the original build */
+    if (localStorage.getItem("ra.killed") === "1") Arcade.state.killed = true;
+    try {
+        const legacyHidden = JSON.parse(localStorage.getItem("ra.hidden") || "[]");
+        if (Array.isArray(legacyHidden)) {
+            legacyHidden.forEach(function (file) {
+                const gid = "b:" + file;
+                if (!Arcade.state.hiddenConsoles.includes(gid) &&
+                    !Object.keys(Arcade.state.overrides).includes(gid)) {
+                    // legacy "hidden base game" becomes an invisible override flag
+                    Arcade.state.overrides[gid] = Object.assign(
+                        {}, Arcade.state.overrides[gid], { hidden: true });
+                }
+            });
+        }
+    } catch (e) { /* ignore */ }
+    return Promise.resolve(Arcade.state);
 }
 
+function saveState(partial) {
+    Object.keys(partial || {}).forEach(function (k) {
+        if (k in DEFAULT_STATE) Arcade.state[k] = partial[k];
+    });
+    if (Arcade.server && Arcade.server.api) {
+        return fetch("api/state", {
+            method: "POST",
+            headers: Object.assign({ "Content-Type": "application/json" }, apiKeyHeaders()),
+            body: JSON.stringify(partial)
+        }).catch(function () { /* offline: keep local copy */ });
+    }
+    localStorage.setItem(STATE_KEY, JSON.stringify(Arcade.state));
+    return Promise.resolve();
+}
+
+function addLog(action, msg) {
+    const log = [{ t: Date.now(), a: action, m: msg }].concat(Arcade.state.log || []);
+    return saveState({ log: log.slice(0, 200) });
+}
+
+function getState() { return Arcade.state || DEFAULT_STATE; }
+
+/* ---------------- kill switch / maintenance / private mode --------------- */
+function isKilled() { return !!getState().killed; }
+
 function setKilled(on) {
-    localStorage.setItem("ra.killed", on ? "1" : "0");
     if (Arcade.server && Arcade.server.api) {
         return fetch("api/kill", {
             method: "POST",
             headers: Object.assign({ "Content-Type": "application/json" }, apiKeyHeaders()),
             body: JSON.stringify({ on: !!on })
         }).then(function (res) { return res.json(); }).then(function (data) {
-            if (Arcade.server) Arcade.server.killed = !!data.killed;
+            Arcade.state.killed = !!data.killed;
             return data;
-        }).catch(function () { return null; });
+        }).catch(function () {
+            return saveState({ killed: !!on });
+        });
     }
-    return Promise.resolve(null);
+    return saveState({ killed: !!on });
+}
+
+function isConsoleHidden(core) {
+    return getState().hiddenConsoles.indexOf(core) !== -1;
 }
 
 /* ---------------- auth (client-side, personal site) ---------------- */
@@ -286,18 +407,114 @@ function setPass(newPass) {
 
 function isAuthed() { return sessionStorage.getItem("ra.auth") === "1"; }
 
-/* ---------------- hidden base games (static-host removal) ---------------- */
-function getHidden() {
-    try { return JSON.parse(localStorage.getItem("ra.hidden") || "[]"); }
-    catch (e) { return []; }
+/* visitor (private-mode) password */
+function checkVisitorPass(input) {
+    const target = getState().visitorPass;
+    if (!target) return Promise.resolve(true);
+    return sha256(input).then(function (h) { return h === target; });
 }
 
-function setHidden(list) { localStorage.setItem("ra.hidden", JSON.stringify(list)); }
+function visitorUnlocked() { return sessionStorage.getItem("ra.visitor") === "1"; }
 
-function hideBase(file) {
-    const hidden = getHidden();
-    if (hidden.indexOf(file) === -1) hidden.push(file);
-    setHidden(hidden);
+/* ---------------- overrides: name / core / art / featured / plays -------- */
+function overrideFor(gid) {
+    const o = getState().overrides;
+    return (o && o[gid]) || null;
+}
+
+function mergeOverride(gid, patch) {
+    const overrides = Object.assign({}, getState().overrides);
+    overrides[gid] = Object.assign({}, overrides[gid] || {}, patch);
+    return saveState({ overrides: overrides });
+}
+
+function clearOverrideFields(gid, fields) {
+    const overrides = Object.assign({}, getState().overrides);
+    const cur = Object.assign({}, overrides[gid] || {});
+    fields.forEach(function (f) { delete cur[f]; });
+    if (Object.keys(cur).length) overrides[gid] = cur;
+    else delete overrides[gid];
+    return saveState({ overrides: overrides });
+}
+
+function toggleFeatured(gid) {
+    const featured = (getState().featured || []).slice();
+    const i = featured.indexOf(gid);
+    if (i === -1) featured.push(gid); else featured.splice(i, 1);
+    return saveState({ featured: featured }).then(function () { return i === -1; });
+}
+
+function toggleHiddenConsole(core) {
+    const hidden = getState().hiddenConsoles.slice();
+    const i = hidden.indexOf(core);
+    if (i === -1) hidden.push(core); else hidden.splice(i, 1);
+    return saveState({ hiddenConsoles: hidden }).then(function () { return i === -1; });
+}
+
+function playsOf(gid) { return getState().plays[gid] || 0; }
+
+function recordPlay(gid) {
+    if (!gid || gid.indexOf("t:") === 0) return Promise.resolve();
+    if (Arcade.server && Arcade.server.api) {
+        return fetch("api/play", {
+            method: "POST",
+            headers: Object.assign({ "Content-Type": "application/json" }, apiKeyHeaders()),
+            body: JSON.stringify({ gid: gid })
+        }).catch(function () { /* ignore */ });
+    }
+    const plays = Object.assign({}, getState().plays);
+    plays[gid] = (plays[gid] || 0) + 1;
+    return saveState({ plays: plays });
+}
+
+/* ---------------- box art ---------------- */
+function setArt(gid, file) {
+    if (Arcade.server && Arcade.server.api) {
+        return fetch("api/art?" + new URLSearchParams({ key: gid }), {
+            method: "POST",
+            body: file,
+            headers: apiKeyHeaders()
+        }).then(function (res) {
+            return res.json().catch(function () { return {}; }).then(function (data) {
+                if (!res.ok) throw new Error(data.error || "Art upload failed");
+                return data;
+            });
+        });
+        // server stored the art path into overrides itself
+    }
+    return idbPutArt({ key: gid, blob: file, added: Date.now() })
+        .then(function () { return mergeOverride(gid, { art: "idb:" + gid }); });
+}
+
+function artUrl(g) {
+    if (!g || !g.art) return Promise.resolve(null);
+    if (g.art.indexOf("idb:") === 0) {
+        const key = g.art.slice(4);
+        if (Arcade._artCache[key]) return Promise.resolve(Arcade._artCache[key]);
+        return idbGetArt(key).then(function (rec) {
+            if (!rec || !rec.blob) return null;
+            Arcade._artCache[key] = URL.createObjectURL(rec.blob);
+            return Arcade._artCache[key];
+        }).catch(function () { return null; });
+    }
+    return Promise.resolve(g.art);
+}
+
+/* Fill art thumbnails on already-rendered cards */
+function fillArt(root, games) {
+    const map = {};
+    games.forEach(function (g) { map[g.id] = g; });
+    $$("[data-art-for]", root).forEach(function (el) {
+        const g = map[el.getAttribute("data-art-for")];
+        if (!g) return;
+        artUrl(g).then(function (url) {
+            if (!url) return;
+            el.style.backgroundImage = 'url("' + url + '")';
+            el.classList.add("has-art");
+            const icon = el.querySelector(".art-icon");
+            if (icon) icon.style.display = "none";
+        });
+    });
 }
 
 /* ---------------- library ---------------- */
@@ -342,17 +559,31 @@ function checkExists(file) {
     });
 }
 
-function listGames() {
+/* Apply admin overrides (rename / re-console / box art / hidden) + stats */
+function applyOverride(g) {
+    g.origName = g.name;
+    g.origCore = g.core;
+    const o = overrideFor(g.id);
+    if (o) {
+        if (o.name) g.name = o.name;
+        if (o.core) g.core = o.core;
+        if (o.art) g.art = o.art;
+        if (o.hidden) g.hidden = true;
+    }
+    g.featured = getState().featured.indexOf(g.id) !== -1;
+    g.plays = playsOf(g.id);
+    return g;
+}
+
+function listGames(opts) {
+    opts = opts || {};
     return Promise.all([loadBase(), loadLocal(), idbPruneTemp()]).then(function (parts) {
-        const base = parts[0], local = parts[1];
-        const hidden = getHidden();
-        const games = base.filter(function (g) { return hidden.indexOf(g.file) === -1; }).concat(local);
+        let games = parts[0].concat(parts[1]).map(applyOverride);
+        if (!opts.includeHidden) games = games.filter(function (g) { return !g.hidden; });
         return Promise.all(games.map(function (g) {
             if (g.source !== "base") return g;
             return checkExists(g.file).then(function (ok) { g.missing = !ok; return g; });
-        })).then(function () {
-            return games;
-        });
+        })).then(function () { return games; });
     });
 }
 
@@ -363,6 +594,12 @@ function countsByConsole(games) {
         counts[g.core] = (counts[g.core] || 0) + 1;
     });
     return counts;
+}
+
+function mostPlayed(games, limit) {
+    return games.filter(function (g) { return g.plays > 0; })
+        .sort(function (a, b) { return b.plays - a.plays || a.name.localeCompare(b.name); })
+        .slice(0, limit || 5);
 }
 
 /* ---------------- add / remove ---------------- */
@@ -396,15 +633,19 @@ function addRom(file, opts) {
         added: Date.now(),
         source: "local"
     }).then(function (rec) {
-        if (Arcade._render) Arcade._render();
-        return rec;
+        return addLog("upload", "Added " + file.name + " (browser)").then(function () {
+            if (Arcade._render) Arcade._render();
+            return rec;
+        });
     });
 }
 
 function removeRom(g) {
     let op;
     if (g.source === "local") {
-        op = idbDel(g.id);
+        op = idbDel(g.id).then(function () {
+            return addLog("remove", "Removed " + g.name + " (browser copy)");
+        });
     } else if (Arcade.server && Arcade.server.api) {
         op = fetch("api/remove", {
             method: "POST",
@@ -417,18 +658,46 @@ function removeRom(g) {
             });
         });
     } else {
-        hideBase(g.file);
-        op = Promise.resolve();
+        op = mergeOverride(g.id, { hidden: true }).then(function () {
+            return addLog("remove", "Hid " + g.name + " (removable via Console Manager)");
+        });
     }
     return op.then(function () {
+        /* drop stale overrides/featured/plays on static hosts for local games */
         if (Arcade._render) Arcade._render();
     });
 }
 
-/* ---------------- play URLs ---------------- */
+/* ---------------- play URLs & deep links ---------------- */
 function playUrl(g) {
     if (g.source === "base") return "play.html?src=base&file=" + encodeURIComponent(g.file);
     return "play.html?src=" + (g.temp ? "temp" : "local") + "&id=" + encodeURIComponent(g.id);
+}
+
+function absolutePlayUrl(g) {
+    return location.origin + location.pathname.replace(/[^/]*$/, "") + playUrl(g);
+}
+
+function copyText(text) {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+        return navigator.clipboard.writeText(text).then(function () { return true; })
+            .catch(function () { return fallbackCopy(text); });
+    }
+    return Promise.resolve(fallbackCopy(text));
+}
+
+function fallbackCopy(text) {
+    try {
+        const ta = document.createElement("textarea");
+        ta.value = text;
+        ta.style.position = "fixed";
+        ta.style.opacity = "0";
+        document.body.appendChild(ta);
+        ta.select();
+        const ok = document.execCommand("copy");
+        ta.remove();
+        return ok;
+    } catch (e) { return false; }
 }
 
 /* ---------------- toast notifications ---------------- */
@@ -528,15 +797,17 @@ function confirmDialog(title, body, okLabel) {
 }
 
 /* ---------------- rendering helpers ---------------- */
-function gameCardHTML(g) {
+function gameCardHTML(g, rankBadge) {
     const c = g.core && CONSOLES[g.core] ? CONSOLES[g.core] : null;
     const color = c ? c.color : "#64748b";
     const label = c ? (c.short || c.name) : (g.core || "Pick system");
     const missing = g.source === "base" && g.missing;
     const sizeTxt = g.size ? fmtSize(g.size) : (extOf(g.file) || "").toUpperCase();
     return '<article class="game-card' + (missing ? " is-missing" : "") + '" data-gid="' + esc(g.id) + '" style="--ccolor:' + color + '">' +
-        '<a class="art" href="' + playUrl(g) + '" aria-label="Play ' + esc(g.name) + '">' +
+        '<a class="art" href="' + playUrl(g) + '" data-art-for="' + esc(g.id) + '" aria-label="Play ' + esc(g.name) + '">' +
         '  <span class="art-icon">' + (c ? c.icon : "💾") + "</span>" +
+        (rankBadge ? '<span class="rank-badge">' + esc(rankBadge) + "</span>" : "") +
+        (g.featured ? '<span class="star-badge" title="Featured">★</span>' : "") +
         '  <span class="art-play">▶ PLAY</span>' +
         "</a>" +
         '<div class="g-meta">' +
@@ -545,6 +816,7 @@ function gameCardHTML(g) {
         '    <span class="badge">' + esc(label) + "</span>" +
         (missing ? '<span class="badge badge-warn">add file</span>' : '<span class="g-size">' + esc(sizeTxt) + "</span>") +
         (g.source === "local" ? '<span class="badge badge-local">added by you</span>' : "") +
+        (g.plays > 0 ? '<span class="g-size">▶ ' + g.plays + "</span>" : "") +
         "  </div>" +
         "</div>" +
         '<button class="g-remove" title="Remove from library" aria-label="Remove ' + esc(g.name) + '">✕</button>' +
@@ -574,7 +846,7 @@ function renderGameGrid(el, games, emptyMsg) {
         el.innerHTML = '<div class="empty-note">' + (emptyMsg || "No games here yet.") + "</div>";
         return;
     }
-    el.innerHTML = games.map(gameCardHTML).join("");
+    el.innerHTML = games.map(function (g) { return gameCardHTML(g); }).join("");
 }
 
 function bindGameCards(root) {
@@ -586,7 +858,7 @@ function bindGameCards(root) {
         const card = btn.closest(".game-card");
         const gid = card && card.getAttribute("data-gid");
         if (!gid) return;
-        listGames().then(function (games) {
+        listGames({ includeHidden: true }).then(function (games) {
             const g = games.find(function (x) { return x.id === gid; });
             if (!g) return;
             confirmDialog(
@@ -683,11 +955,15 @@ function renderChrome(active) {
             '    <a href="index.html#consoles" data-nav="consoles">Consoles</a>' +
             '    <a href="index.html#add" data-nav="add">Add ROMs</a>' +
             "  </nav>" +
+            (active === "home" ? "" :
             '  <form class="nav-search" action="search.html" method="get" role="search">' +
             '    <input type="search" name="q" placeholder="Search games or consoles…" autocomplete="off" value="">' +
             '    <button type="submit" aria-label="Search">🔍</button>' +
-            "  </form>" +
-            "</div>";
+            "  </form>") +
+            "</div>" +
+            (getState().maintenance
+                ? '<div class="maint-banner">🚧 Maintenance mode is on — the arcade may be briefly unavailable while the owner works on things.</div>'
+                : "");
         $$("#main-nav a").forEach(function (a) {
             if (a.getAttribute("data-nav") === active) a.classList.add("active");
         });
@@ -699,7 +975,9 @@ function renderChrome(active) {
 
     const footer = $("#site-footer");
     if (footer) {
-        const topKeys = ["nes", "snes", "n64", "gb", "gba", "nds", "segaMD", "psx"];
+        const st = getState();
+        const topKeys = ["nes", "snes", "n64", "gb", "gba", "nds", "segaMD", "psx"]
+            .filter(function (k) { return st.hiddenConsoles.indexOf(k) === -1; });
         footer.innerHTML =
             '<div class="container footer-grid">' +
             "  <div>" +
@@ -752,12 +1030,50 @@ function haltWithKillScreen() {
         "</div>";
 }
 
+/* Private-mode lock screen (visitors must enter the password) */
+function visitorGate() {
+    document.title = "Members Only — ROM Arcade";
+    document.body.innerHTML =
+        '<div class="kill-screen">' +
+        '  <div class="kill-card gate-card">' +
+        '    <div class="kill-icon">🔐</div>' +
+        "    <h1>PRIVATE ARCADE</h1>" +
+        "    <p>This arcade is members-only. Enter the visitor password to continue.</p>" +
+        '    <input type="password" id="gate-pass" class="input gate-input" placeholder="Visitor password">' +
+        '    <div class="gate-error" id="gate-error"></div>' +
+        '    <button class="btn btn-main" id="gate-btn">Unlock</button>' +
+        "  </div>" +
+        "</div>";
+    const input = $("#gate-pass");
+    const btn = $("#gate-btn");
+    async function attempt() {
+        const ok = await checkVisitorPass(input.value);
+        if (ok) {
+            sessionStorage.setItem("ra.visitor", "1");
+            location.reload();
+        } else {
+            $("#gate-error").textContent = "Wrong password.";
+            input.value = "";
+            input.focus();
+        }
+    }
+    btn.addEventListener("click", attempt);
+    input.addEventListener("keydown", function (e) { if (e.key === "Enter") attempt(); });
+    input.focus();
+}
+
 /* ---------------- boot ---------------- */
 async function boot(active) {
     Arcade.server = await probeServer();
-    if (isKilled() && !location.pathname.endsWith("/staff.html")) {
+    await loadState();
+    const staffPage = location.pathname.endsWith("/staff.html");
+    if (isKilled() && !staffPage) {
         haltWithKillScreen();
         return true; // halted — caller must stop
+    }
+    if (!staffPage && getState().privateMode && getState().visitorPass && !visitorUnlocked()) {
+        visitorGate();
+        return true;
     }
     renderChrome(active);
     return false;
@@ -766,20 +1082,34 @@ async function boot(active) {
 /* expose everything pages need */
 Object.assign(Arcade, {
     boot: boot,
+    loadState: loadState,
+    saveState: saveState,
+    addLog: addLog,
+    getState: getState,
     listGames: listGames,
     countsByConsole: countsByConsole,
+    mostPlayed: mostPlayed,
     loadBase: loadBase,
     checkExists: checkExists,
     addRom: addRom,
     removeRom: removeRom,
-    hideBase: hideBase,
-    getHidden: getHidden,
-    setHidden: setHidden,
+    mergeOverride: mergeOverride,
+    clearOverrideFields: clearOverrideFields,
+    toggleFeatured: toggleFeatured,
+    toggleHiddenConsole: toggleHiddenConsole,
+    isConsoleHidden: isConsoleHidden,
+    setArt: setArt,
+    artUrl: artUrl,
+    fillArt: fillArt,
+    recordPlay: recordPlay,
+    playsOf: playsOf,
     isKilled: isKilled,
     setKilled: setKilled,
     checkPass: checkPass,
     setPass: setPass,
     isAuthed: isAuthed,
+    checkVisitorPass: checkVisitorPass,
+    visitorUnlocked: visitorUnlocked,
     idbPut: idbPut,
     idbGet: idbGet,
     idbDel: idbDel,
@@ -795,5 +1125,7 @@ Object.assign(Arcade, {
     gameCardHTML: gameCardHTML,
     consoleCardHTML: consoleCardHTML,
     pillHTML: pillHTML,
-    playUrl: playUrl
+    playUrl: playUrl,
+    absolutePlayUrl: absolutePlayUrl,
+    copyText: copyText
 });
