@@ -1,0 +1,14 @@
+[
+  {
+    "file": "Tetris.nes",
+    "name": "Tetris",
+    "size": 24592,
+    "core": "nes"
+  },
+  {
+    "file": "Nestest.nes",
+    "name": "Nes test",
+    "size": 24592,
+    "core": "nes"
+  }
+]
