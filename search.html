@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Search ROMs — ROM Arcade</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%95%B9%EF%B8%8F%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/arcade.css">
+</head>
+<body>
+<header class="site-header" id="site-header"></header>
+
+<main>
+    <section class="section" style="padding-top:40px">
+        <div class="container">
+            <div class="section-head">
+                <h2>Search ROMs</h2>
+            </div>
+            <p class="section-blurb">Search by game <b>name</b> or by <b>console</b> — matching games and systems show up as you type.</p>
+
+            <div class="toolbar">
+                <input class="input" type="search" id="q" placeholder="Search games or consoles… (e.g. “mario”, “NES”, “sonic”)" autocomplete="off">
+                <select class="input" id="sys-filter">
+                    <option value="">All consoles</option>
+                </select>
+                <label class="btn btn-ghost" style="cursor:pointer">
+                    📂 Open file… <input type="file" id="open-file" hidden>
+                </label>
+            </div>
+
+            <div class="result-count" id="result-count"></div>
+
+            <div id="console-results">
+                <div class="section-head" id="console-results-head" style="display:none">
+                    <h2 style="font-size:19px">Consoles</h2>
+                </div>
+                <div class="console-grid" id="console-grid" style="margin-bottom:26px"></div>
+            </div>
+
+            <div class="section-head">
+                <h2 style="font-size:19px" id="games-head">Games</h2>
+            </div>
+            <div class="game-grid" id="game-grid"></div>
+
+            <div class="section" style="padding-top:40px">
+                <div class="section-head">
+                    <h2 style="font-size:19px">Add ROMs while you search</h2>
+                </div>
+                <div id="dropzone" class="dropzone">
+                    <span class="dz-icon">📂</span>
+                    <h3>Drop ROM files here, or click to browse</h3>
+                    <p>Added to the library instantly — no <code>roms.json</code> editing required.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+</main>
+
+<footer class="site-footer" id="site-footer"></footer>
+
+<script src="js/arcade.js"></script>
+<script>
+(async function () {
+    if (await Arcade.boot("search")) return;
+
+    const qInput = $("#q");
+    const sysSel = $("#sys-filter");
+    const gameGrid = $("#game-grid");
+    const consoleGrid = $("#console-grid");
+    const consoleHead = $("#console-results-head");
+    const countEl = $("#result-count");
+
+    // console filter dropdown
+    sysSel.innerHTML = '<option value="">All consoles</option>' +
+        Object.keys(CONSOLES).filter(function (k) { return !Arcade.isConsoleHidden(k); })
+        .sort(function (a, b) {
+            return CONSOLES[a].name.localeCompare(CONSOLES[b].name);
+        }).map(function (k) {
+            return '<option value="' + k + '">' + esc(CONSOLES[k].name) + "</option>";
+        }).join("");
+
+    Arcade.bindGameCards(gameGrid);
+
+    const params = new URLSearchParams(location.search);
+    qInput.value = params.get("q") || "";
+    if (params.get("system") && CONSOLES[params.get("system")]) sysSel.value = params.get("system");
+
+    let cache = [];
+
+    async function load() {
+        cache = await Arcade.listGames();
+        draw();
+    }
+
+    function draw() {
+        const term = qInput.value.trim().toLowerCase();
+        const sys = sysSel.value;
+
+        // console matches (by console name or short name; hidden consoles excluded)
+        const consoleMatches = Object.keys(CONSOLES).filter(function (k) {
+            if (Arcade.isConsoleHidden(k)) return false;
+            const c = CONSOLES[k];
+            return !term ||
+                c.name.toLowerCase().indexOf(term) !== -1 ||
+                c.short.toLowerCase().indexOf(term) !== -1 ||
+                k.toLowerCase().indexOf(term) !== -1;
+        });
+
+        // console grid: matches when searching, otherwise everything
+        consoleHead.style.display = term ? "flex" : "none";
+        if (term) {
+            const counts = Arcade.countsByConsole(cache);
+            consoleGrid.innerHTML = consoleMatches.length
+                ? consoleMatches.map(function (k) { return Arcade.consoleCardHTML(k, counts[k] || 0); }).join("")
+                : '<div class="empty-note">No consoles match “' + esc(qInput.value.trim()) + '”.</div>';
+            consoleGrid.style.display = "";
+        } else {
+            consoleGrid.style.display = "none";
+        }
+
+        // game matches: name, filename, or console name; plus system dropdown filter
+        const games = cache.filter(function (g) {
+            if (g.core && Arcade.isConsoleHidden(g.core)) return false;
+            if (sys && g.core !== sys) return false;
+            if (!term) return true;
+            const c = g.core ? CONSOLES[g.core] : null;
+            return g.name.toLowerCase().indexOf(term) !== -1 ||
+                g.file.toLowerCase().indexOf(term) !== -1 ||
+                (c && (c.name.toLowerCase().indexOf(term) !== -1 || c.short.toLowerCase().indexOf(term) !== -1));
+        }).sort(function (a, b) { return a.name.localeCompare(b.name, undefined, { numeric: true }); });
+
+        countEl.textContent = games.length + " game" + (games.length === 1 ? "" : "s") +
+            (sys ? " · " + CONSOLES[sys].name : "") +
+            (term ? ' · matching “' + qInput.value.trim() + '”' : "");
+
+        $("#games-head").textContent = term || sys ? "Matching Games" : "All Games";
+        Arcade.renderGameGrid(gameGrid, games,
+            term
+                ? "No games match that search."
+                : "No games yet — drop a ROM below or put files in the <code>roms/</code> folder.");
+        Arcade.fillArt(gameGrid, games);
+    }
+
+    qInput.addEventListener("input", debounce(draw, 160));
+    sysSel.addEventListener("change", draw);
+    $("#open-file").addEventListener("change", function (e) {
+        if (e.target.files && e.target.files[0]) Arcade.openLocalFile(e.target.files[0]);
+    });
+
+    Arcade._render = load;
+    Arcade.mountUploader($("#dropzone"));
+    await load();
+    qInput.focus();
+})();
+</script>
+</body>
+</html>
