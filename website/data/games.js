@@ -71,6 +71,17 @@ featured=true
 hero=true
 
 [game]
+id=FNAF-SL
+title=Five nights at Freddy's: Sister Location
+path=games/Five-nights-at-Freddys/sister-location/index.html
+icon=games/Five-nights-at-Freddys/sister-location/icon.png
+version=version 1.1
+description=Deep below the surface, Circus Baby's Entertainment and Rental keeps its animatronics in perfect working order, and your job is to keep it that way through the night shift. The facility is full of rental suites, crawlspaces and stage lights, and the show has a life of its own. Follow the instructions, keep the animatronics happy, and whatever you do, don't trust everything you see in the dark.
+tags=Horror, Survival, Jump scare, Keyboard required, First person
+featured=true
+hero=true
+
+[game]
 id=Spacebar-clicker
 title=Spacebar clicker
 path=games/Spacebar-clicker/index.html
