@@ -62,5 +62,23 @@ window.AMPLER_CLIENTS = [
         path: 'website/mc/1.5.2/index.html',
         bundled: true,
         source: 'Eaglercraft_1.5.2-sp2.01_Offline.zip'
+    },
+    {
+        id: 'Beta-1.3',
+        title: 'Beta 1.3',
+        version: 'Minecraft Beta 1.3',
+        icon: './website/images/m-logo2.png',
+        path: 'website/mc/Beta-1.3/index.html',
+        bundled: true,
+        source: 'Beta_1.3.html'
+    },
+    {
+        id: 'Alpha-1.2.6',
+        title: 'Alpha 1.2.6',
+        version: 'Minecraft Alpha 1.2.6',
+        icon: './website/images/m-logo1.png',
+        path: 'website/mc/Alpha-1.2.6/index.html',
+        bundled: true,
+        source: 'Alpha_1.2.6.html'
     }
 ];

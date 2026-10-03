@@ -40,3 +40,7 @@ website/**/*.svg   text eol=lf
 # shipped as one big self-contained file.
 website/games/Five-nights-at-Freddys/*/index.html -text -diff
 website/games/Ealgercraft/Ampler-Launcher/website/mc/** -text -diff
+
+# Keep the short provenance notes beside individual builds readable/diffable;
+# the large self-contained HTML files remain protected by the rule above.
+website/games/Ealgercraft/Ampler-Launcher/website/mc/**/README.md text eol=lf diff
