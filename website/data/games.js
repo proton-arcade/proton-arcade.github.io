@@ -71,6 +71,17 @@ featured=true
 hero=true
 
 [game]
+id=FNAF-SL
+title=Five nights at Freddy's: Sister Location
+path=games/Five-nights-at-Freddys/sister-location/index.html
+icon=games/Five-nights-at-Freddys/sister-location/icon.png
+version=version 1.0
+description=Welcome to Circus Baby's Pizza World, where family fun and interactivity go beyond anything you've seen at those other pizza places! With cutting-edge animatronic entertainers that will knock your kids' socks off, we guarantee that you and your family will want to visit every single day!
+tags=Horror, Survival, Jump scare, Keyboard required, First person
+featured=true
+hero=true
+
+[game]
 id=Spacebar-clicker
 title=Spacebar clicker
 path=games/Spacebar-clicker/index.html
