@@ -1,0 +1,24 @@
+# Nothing in here is needed to run the arcade - the whole site loads from files
+# that are committed.
+
+# Verification scaffolding (Ampler Launcher's checkers pull these in on demand;
+# see "Repo notes" in the README). Never part of the site.
+node_modules/
+package.json
+package-lock.json
+
+# Python
+__pycache__/
+*.pyc
+
+# Ampler Launcher's optional local multiplayer server, generated at runtime.
+website/games/Ealgercraft/Ampler-Launcher/website/server/*.jar
+website/games/Ealgercraft/Ampler-Launcher/website/server/runtime/
+website/games/Ealgercraft/Ampler-Launcher/website/server/logs/
+website/games/Ealgercraft/Ampler-Launcher/website/server/world*/
+website/games/Ealgercraft/Ampler-Launcher/website/server/eula.txt
+website/games/Ealgercraft/Ampler-Launcher/website/server/plugins.txt
+
+# OS noise
+.DS_Store
+Thumbs.db
