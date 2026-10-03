@@ -20,5 +20,5 @@ games=Ampler-Launcher
 available=true
 id=FNAFS
 title=FNAF games
-games=FNAF-1, FNAF-2, FNAF-3, FNAF-4
+games=FNAF-1, FNAF-2, FNAF-3, FNAF-4, FNAF-SL
 `;
