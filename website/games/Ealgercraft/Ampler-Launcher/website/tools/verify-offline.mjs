@@ -5,7 +5,7 @@
  * Proves the three things this rebuild claims:
  *
  *   1. NOTHING is fetched from the network.
- *      Every html/css/js file in the repo (including the five 15-31 MB game
+ *      Every html/css/js file in the repo (including all seven bundled game
  *      builds) is scanned for anything that would open a connection, and every
  *      hit must be on a documented allowlist.
  *
@@ -395,6 +395,11 @@ if (SKINS.length === 0) {
     if (skinProblems === 0)
         ok('every skin has its folder, its <name>.png and its ' + SKIN_PREFIX + '<name>.png');
 
+    // Snapshot folders before validating a baked list: this must be in scope
+    // before the stale-entry filter runs when list.js is non-empty.
+    const foldersOnDisk = readdirSync(SKIN_FOLDER)
+        .filter((n) => !n.startsWith('.') && statSync(join(SKIN_FOLDER, n)).isDirectory());
+
     // website/skins/list.js is either the empty placeholder (the committed
     // default) or a baked listing from tools/bake-skins.py. Both are valid, but
     // it has to be loadable JavaScript either way.
@@ -427,8 +432,6 @@ if (SKINS.length === 0) {
     // launcher is served by tools/serve.py (it answers website/skins/list.js
     // from the directory listing). Off disk and on plain static servers the
     // list is what the page goes by, so this is a note, not a failure.
-    const foldersOnDisk = readdirSync(SKIN_FOLDER)
-        .filter((n) => !n.startsWith('.') && statSync(join(SKIN_FOLDER, n)).isDirectory());
     const unlisted = foldersOnDisk.filter((n) => !SKINS.includes(n));
     unlisted.length === 0
         ? ok('every skin folder on disk is also in js/skins.js (' + foldersOnDisk.length + ')')

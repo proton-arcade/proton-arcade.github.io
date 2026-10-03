@@ -96,11 +96,12 @@ it expected if step 1 and step 2 disagree.
 | `website/games/Baldis-basics/` | Baldi's Basics | placeholder page, in the catalog |
 | `website/games/Spacebar-clicker/` | Spacebar Clicker | placeholder page, in the catalog |
 | `website/games/index.html` | test entry (`id=test`) | placeholder page, not in a collection |
-| `website/games/gam temp/` | — | stray scratch folder (one 1-byte file), safe to delete |
+| `website/games/gam temp/` | — | archived handoff file; not part of the site |
 
 The placeholder pages say so on the page itself. They are already wired into
 the catalog, so replacing the file in place when a build lands needs no catalog
-edit.
+edit. Spacebar Clicker and Baldi's Basics each have their own card art; neither
+uses the generic fallback tile.
 
 ## Ampler Launcher
 
@@ -110,17 +111,30 @@ Minecraft-themed launcher for [Eaglercraft](https://github.com/lax1dude/eaglercr
 that runs entirely offline: plain HTML/CSS/JS, no build step, no installer, no
 network access at runtime.
 
-It is a **byte-for-byte copy** of the `main` branch of that repository, except
-for two deliberate differences:
+It is vendored from the `main` branch of that repository. Most upstream files
+are kept byte-for-byte; the intentional arcade-specific additions and fixes
+are:
 
-* the repo-level `.gitattributes` / `.gitignore` stay upstream (this arcade has
-  its own, see [Repo notes](#repo-notes));
-* `icon.png` next to `index.html` is the launcher's `website/images/logo.png`,
-  added because the arcade catalog needs card art.
+* the repository-level `.gitattributes` / `.gitignore` live at this repo's
+  root, not inside the vendor folder;
+* `icon.png` next to `index.html` uses the launcher's `website/images/logo.png`
+  as arcade card art;
+* `website/images/m-logo1.png` and `m-logo2.png` are true PNGs, re-encoded
+  pixel-identically because the upstream files contained WebP bytes with a
+  `.png` extension;
+* two single-file builds from
+  [Offline-HTML-Games-Pack](https://github.com/CoolDude2349/Offline-HTML-Games-Pack)
+  are added to the version list: Beta 1.3 and Alpha 1.2.6. Each source file's
+  injected Cloudflare Web Analytics script was removed; it is not part of the
+  game and would otherwise make an off-site request;
+* `website/skins/list.js` is baked for plain static hosts such as GitHub Pages,
+  and `website/tools/verify-offline.mjs` has a declaration-order fix for its
+  baked-skins check.
 
-Everything else — the launcher page, the five Eaglercraft builds, the skins, the
-optional LAN server and the offline test suites — is identical to upstream, so
-this folder can be re-synced any time by copying upstream over it.
+`website/tools/check-images.mjs` audits the card and launcher images, catalog
+paths, and committed artwork. The upstream launcher page, five original
+Eaglercraft builds, skins and optional LAN server remain in place. Re-syncing
+from upstream should therefore be followed by the image and offline audits.
 
 ### Layout
 
@@ -145,6 +159,8 @@ website/start-offline.*  one-click local server (needs python3)
 | 1.8.8-u53 | `website/mc/1.8.8/` |
 | 1.8.8-u53 WASM-GC | `website/mc/1.8.8-wasm/` |
 | 1.5.2-sp2.01 | `website/mc/1.5.2/` |
+| Beta 1.3 | `website/mc/Beta-1.3/` |
+| Alpha 1.2.6 | `website/mc/Alpha-1.2.6/` |
 
 Singleplayer works with no server. The WASM builds want `SharedArrayBuffer`,
 which needs the two isolation headers the launcher's own server sends:
@@ -187,11 +203,12 @@ version dropdown and the Play button follow that manifest automatically.
 Ampler Launcher's `website/mc/<id>/index.html` is a single 15–60 MB file whose
 payload legitimately contains CRLF byte pairs. Normalising line endings
 corrupts the archive and the game fails to boot, with no warning at runtime.
-`.gitattributes` therefore marks exactly those paths `-text -diff`, with the
-rule deliberately ordered last so nothing overrides it. If you add another
-build that ships as one self-contained file, add its path to that rule — a
-blanket `website/games/**/index.html` would also swallow the small hand-written
-pages in that folder.
+`.gitattributes` therefore marks exactly those builds `-text -diff`, with the
+rule deliberately ordered last so nothing overrides it. The short `README.md`
+provenance notes beside the two added builds have a later text/diffable rule.
+If you add another build that ships as one self-contained file, add its path to
+the binary rule — a blanket `website/games/**/index.html` would also swallow
+the small hand-written pages in that folder.
 
 **Nothing reaches the network at runtime.** The catalog, the icons, the fonts
 (the launcher self-hosts Roboto) and the game builds are all local files. The
@@ -200,10 +217,13 @@ only optional network use in the whole repo is Ampler Launcher's
 multiplayer server jar; it is not part of the site.
 
 **Verify a change** by serving the repo (`python3 -m http.server 8000`) and
-walking the home page, a collection and a game. Ampler Launcher also ships two
-checkers, both run from its own folder:
+walking the home page, a collection and a game. The repo also has a
+zero-dependency image/catalog audit; run it from the repo root, then run the
+launcher checks from the vendored launcher folder:
 
 ```bash
+node website/tools/check-images.mjs
+cd website/games/Ealgercraft/Ampler-Launcher
 node website/tools/verify-offline.mjs     # static + jsdom checks: no network, references resolve
 node website/tools/browser-test.mjs       # real browser: file:// and http://, boots the builds
 ```
@@ -216,6 +236,9 @@ into a scratch folder or with `--no-save`, they are not part of the site.
 ## Credits
 
 Eaglercraft and EaglerXServer by lax1dude and contributors; the Ampler Launcher
-UI and this arcade's game bundles come from
-[proton-arcade](https://github.com/proton-arcade). Games remain the property of
-their respective authors — this repository only serves them.
+UI and original game bundles come from
+[proton-arcade](https://github.com/proton-arcade). The Beta 1.3 and Alpha 1.2.6
+builds are sourced from
+[CoolDude2349/Offline-HTML-Games-Pack](https://github.com/CoolDude2349/Offline-HTML-Games-Pack).
+The arcade card illustrations are original artwork. Games remain the property
+of their respective authors — this repository only serves them.
