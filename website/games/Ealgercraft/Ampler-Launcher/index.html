@@ -1,34 +1,162 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
+
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#111216">
-  <title>Ampler Launcher — temporary game placeholder</title>
-  <style>
-    :root { color-scheme: dark; font-family: Arial, Helvetica, sans-serif; }
-    * { box-sizing: border-box; }
-    body { margin: 0; min-height: 100vh; display: grid; place-items: center; padding: 24px;
-      color: #f4f3f5; background: radial-gradient(ellipse at 50% 25%, #30212b 0, #17181d 45%, #101014 100%); }
-    main { width: min(100%, 620px); padding: clamp(24px, 6vw, 48px); text-align: center;
-      background: rgba(27,28,34,.96); border: 1px solid #3b333d; border-radius: 18px;
-      box-shadow: 0 24px 80px rgba(0,0,0,.45); }
-    .badge { display: inline-block; margin-bottom: 22px; padding: 7px 12px; border-radius: 99px;
-      color: #ffb19f; background: #39241f; font-size: .78rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
-    h1 { margin: 0 0 14px; font-size: clamp(1.8rem, 6vw, 3rem); line-height: 1.05; }
-    p { color: #bcb8c1; line-height: 1.65; }
-    a { display: inline-block; margin-top: 18px; padding: 12px 18px; border-radius: 8px;
-      color: #171015; background: #ff785f; font-weight: 700; text-decoration: none; }
-    a:hover { background: #ff9c87; }
-  </style>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ampler Launcher</title>
+
+    <!-- Everything below resolves inside this folder. No CDN, no preconnect,
+         no webfont request. css/fonts.css serves Roboto from ./fonts/. -->
+    <link rel="stylesheet" href="./website/css/fonts.css">
+    <link rel="stylesheet" href="./website/css/style.css">
+    <link rel="stylesheet" media="screen and (max-width: 1100px)" href="./website/css/screensize.css">
+    <link rel="stylesheet" media="screen and (max-height: 550px)" href="./website/css/screensize.css">
+    <link rel="shortcut icon" href="./website/images/logo.png" type="image/x-icon">
+
+    <!-- Discord embed metadata. Relative-safe: og: tags are only read by chat
+         scrapers over the network, never fetched by the browser. -->
+    <meta content="Ampler Launcher" property="og:title">
+    <meta content="A minecraft themed launcher for Eaglercraft - fully offline build" property="og:description">
+    <meta content="#786d81" data-react-helmet="true" name="theme-color">
 </head>
-<body>
-  <main>
-    <span class="badge">Temporary game placeholder</span>
-    <h1>Ampler Launcher</h1>
-    <p>The game build is not included in the source repository yet.</p>
-    <p>Replace this page with the game files when they are available.</p>
-    <a href="../../../../index.html" target="_top" rel="noopener">Back to Exst Arcade</a>
-  </main>
+
+<body style="font-family: 'Roboto', sans-serif;">
+    <div id="naerror" class="error">
+        <div>
+            <p style="margin-left: 1vw;" class="bolded">SORRY!</p>
+            <p id="naerror-text" style="color: goldenrod;">This feature hasn't been made yet.</p>
+        </div>
+    </div>
+
+    <div class="mainPage" id="mainPage">
+
+        <!-- ============================ Top bar ============================ -->
+        <div id="gameheader" class="gameHeader">
+            <p id="gameedition" class="currentGame bolded">Ampler Launcher</p>
+            <div id="javatabs">
+                <ul class="gameTabs" role="tablist">
+                    <li id="header1" class="headerButtonSelected" role="tab" aria-selected="true" tabindex="0"
+                        onclick="showView('play')">Play</li>
+                    <li id="header2" class="headerButtons" role="tab" aria-selected="false" tabindex="0"
+                        onclick="showView('skins')">Skins</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- ============================ Play page ============================ -->
+        <div id="playview" class="view">
+            <div id="game-bg" class="gameBg" style="background-image: url(./website/images/web-edition.jpg);">
+                <div class="gameLogo">
+                    <img id="game-header" src="./website/images/ampler-title.png" alt="Ampler Launcher">
+                </div>
+            </div>
+        </div>
+
+        <!-- ============================ Skins page ============================
+             Same background as the Play page, with the skin boxes sitting on
+             top of it and a small gap between them. The list is whatever is in
+             website/skins/: served, the folder listing itself is the list; off
+             disk, the folder picker or js/skins.js names them (see its header). -->
+        <div id="skinsview" class="view skinsView" hidden>
+            <div class="skinsScroll" id="skinsscroll">
+                <div class="skinsHead">
+                    <div class="skinsHeadText">
+                        <p class="skinsTitle bolded">Skins</p>
+                        <p class="skinsCount" id="skinscount"></p>
+                    </div>
+                    <div class="skinsTools">
+                        <div class="skinSearch">
+                            <input id="skinsearch" type="text" placeholder="Search skins" spellcheck="false"
+                                autocomplete="off" oninput="filterSkins(this.value)">
+                        </div>
+                        <div class="skinTool" id="addfolder" role="button" tabindex="0" aria-label="Add skin folder"
+                            onclick="pickSkinFolder()" title="Load skin folders from anywhere on this computer">
+                            <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor"
+                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M5 4h4l3 3h7a2 2 0 0 1 2 2v8a2 2 0 0 1 -2 2h-14a2 2 0 0 1 -2 -2v-11a2 2 0 0 1 2 -2" />
+                                <path d="M12 10.5v5" />
+                                <path d="M9.5 13h5" />
+                            </svg>
+                            <p>Add skin folder</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Filled in by website/js/skinsview.js -->
+                <div id="skingrid" class="skinsGrid"></div>
+
+                <div id="skinempty" class="skinsEmpty" hidden>
+                    <p class="bolded">No skins yet.</p>
+                    <p>Add one by dropping its folder in <span class="mono">website/skins/</span>:</p>
+                    <pre class="mono">website/skins/my skin/
+   my skin.png            the skin
+   preview.my skin.png    the preview picture</pre>
+                    <p>That is the whole setup - reload and it is on this page. To remove a skin, delete its folder.</p>
+                    <p>Opened straight off disk? Press <span class="mono">Add skin folder</span> and pick the folder, or
+                        run <span class="mono">python3 website/tools/bake-skins.py</span> once and reload.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============================ Bottom bar ===========================
+             Play page: version selector + Play + user.
+             Skins page: the user, nothing else (see .skinsMode in style.css). -->
+        <div class="gameSelection">
+            <div class="versionSelector">
+                <div id="drop" class="dropdownSelector" role="button" tabindex="0" aria-haspopup="listbox"
+                    aria-expanded="false" aria-label="Choose a version" onclick="dropdowntoggle()">
+                    <div style="display: flex; gap: 1vw;">
+                        <div class="centeredIcon">
+                            <img id="gameicon" src="./website/images/m-logo1.png" alt="">
+                        </div>
+                        <div class="versionText">
+                            <p id="gametitle" class="bolded">Latest release</p>
+                            <p id="gameversion">1.12.2-u3</p>
+                        </div>
+                        <div class="centeredIcon">
+                            <span id="dropdownuparrow"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Populated by js/index.js from js/clients.js -->
+            <div id="dropdn" class="dropdownMenu" role="listbox" style="visibility: hidden;"></div>
+
+            <a id="playbutton" href="website/mc/1.12.2/index.html" target="_blank" rel="noopener">
+                <div id="mainbutton" class="playButton"></div>
+            </a>
+
+            <!-- Click it to rename yourself. The name is saved locally and is
+                 shown on every page of the launcher. -->
+            <div class="username centeredIcon bolded" id="userbox" role="button" tabindex="0" aria-label="Your username"
+                onclick="editUser()" title="Click to change your username">
+                <p id="username" class="usernameText">Generic User</p>
+                <input id="usernameinput" class="usernameInput" type="text" maxlength="24" spellcheck="false"
+                    autocomplete="off" placeholder="Username" onclick="event.stopPropagation()">
+                <svg class="userEditIcon" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor"
+                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M4 20h4l10.5 -10.5a2.828 2.828 0 1 0 -4 -4l-10.5 10.5v4" />
+                    <path d="M13.5 6.5l4 4" />
+                </svg>
+            </div>
+        </div>
+    </div>
+
+    <!-- "Add skin folder": loads folders straight off the disk for this session,
+         so skins can be tried out without touching the repo. -->
+    <input id="skinfolder" type="file" accept="image/*" multiple hidden>
+
+    <script src="./website/js/clients.js"></script>
+    <script src="./website/js/skins.js"></script>
+    <!-- Skins that are actually on disk. A plain placeholder file when the
+         launcher is opened off disk; generated from the folder listing by
+         website/tools/serve.py, so dropping a folder into website/skins/ is
+         the whole setup. See website/js/skins.js. -->
+    <script src="./website/skins/list.js"></script>
+    <script src="./website/js/index.js"></script>
+    <script src="./website/js/skinsview.js"></script>
 </body>
 </html>

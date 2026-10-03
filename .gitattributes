@@ -1,0 +1,42 @@
+# ---------------------------------------------------------------------------
+# ATTRIBUTE ORDER MATTERS: for any given attribute, the LAST matching pattern
+# wins. The broad text rules come first and the game-build binary rule comes
+# last, so nothing can override it.
+#
+# Getting this wrong silently destroys the bundled games: a build such as
+# website/games/Ealgercraft/Ampler-Launcher/website/mc/1.12.2/index.html is a
+# 15-60 MB single file whose base64/binary payload legitimately contains CRLF
+# byte pairs. Normalising it to LF corrupts the archive and the game fails to
+# boot, with no warning at runtime.
+#
+# The same rule protects Ampler Launcher, which is vendored from
+# https://github.com/proton-arcade/AmplerLauncher byte for byte. Its own
+# .gitattributes is not copied in here on purpose - this file has to cover it.
+# ---------------------------------------------------------------------------
+
+# Ordinary text first.
+*.html text eol=lf
+*.css  text eol=lf
+*.js   text eol=lf
+*.mjs  text eol=lf
+*.py   text eol=lf
+*.md   text eol=lf
+*.sh   text eol=lf
+*.command text eol=lf
+*.bat  text eol=crlf
+
+# Binary assets.
+website/**/*.woff2 binary
+website/**/*.zip   binary
+website/**/*.png   binary
+website/**/*.jpg   binary
+website/**/*.jpeg  binary
+website/**/*.svg   text eol=lf
+
+# LAST, so they win: the bundled game builds are opaque binaries. No diff, no
+# line-ending conversion, no text detection. Paths are listed one by one on
+# purpose - a blanket website/games/**/index.html would also swallow the small
+# hand-written pages in that folder. Add a line here for any new build that is
+# shipped as one big self-contained file.
+website/games/Five-nights-at-Freddys/*/index.html -text -diff
+website/games/Ealgercraft/Ampler-Launcher/website/mc/** -text -diff
