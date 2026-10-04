@@ -1,10 +1,16 @@
 (function () {
-  const catalog = window.EXST_GAMES || [];
+  const catalog = window.EXST_APPLICATIONS || [];
+  const games = catalog.filter((app) => app.location === 'games');
+  const tools = catalog.filter((app) => app.location === 'tools');
+  function readPreference(key, fallback) {
+    try { return localStorage.getItem(key) || fallback; } catch (_) { return fallback; }
+  }
   const rows = document.getElementById('rows');
   const grid = document.getElementById('searchGrid');
   const storageKey = 'exstHomeSections';
   let settings = {};
-  try { settings = JSON.parse(localStorage.getItem(storageKey) || '{}'); } catch (_) { settings = {}; }
+  try { settings = JSON.parse(readPreference(storageKey, '{}')); } catch (_) { settings = {}; }
+  if (!settings || typeof settings !== 'object' || Array.isArray(settings)) settings = {};
 
   function makeCard(game) {
     const link = document.createElement('a');
@@ -14,7 +20,7 @@
     const image = document.createElement('img');
     image.src = `website/${game.icon || 'assets/images/default-game.svg'}`;
     image.alt = '';
-    image.onerror = () => { image.src = 'website/assets/images/default-game.svg'; };
+    image.onerror = () => { image.onerror = null; image.src = 'website/assets/images/default-game.svg'; };
     const title = document.createElement('span');
     title.textContent = game.title;
     link.append(image, title);
@@ -24,14 +30,14 @@
   function renderSections() {
     rows.replaceChildren();
     const groups = new Map();
-    catalog.forEach((game) => {
+    games.forEach((game) => {
       (game.tags || 'Games').split(',').map((tag) => tag.trim()).filter(Boolean).forEach((tag) => {
         if (settings[tag] === false) return;
         if (!groups.has(tag)) groups.set(tag, []);
         groups.get(tag).push(game);
       });
     });
-    if (!groups.size && catalog.length) groups.set('Games', catalog);
+
     function appendRow(label, items) {
       const section = document.createElement('section');
       section.className = 'flix-row';
@@ -43,17 +49,17 @@
       section.append(heading, cards);
       rows.append(section);
     }
-    (window.EXST_FOLDERS || []).forEach((folder) => {
+    (window.EXST_COLLECTIONS || []).forEach((folder) => {
       if (settings[`collection:${folder.id}`] === false) return;
-      const collectionGames = folder.games.map((id) => catalog.find((game) => game.id === id)).filter(Boolean);
+      const collectionGames = folder.applications.map((id) => games.find((game) => game.id === id)).filter(Boolean);
       if (collectionGames.length) appendRow(folder.title, collectionGames);
     });
     groups.forEach((items, label) => appendRow(label, items));
   }
 
   // Only games explicitly marked `hero=true` belong in the banner. Filtering
-  // preserves their order in data/games.js; all other catalog entries are skipped.
-  const spotlightGames = catalog.filter((game) => game.hero === 'true');
+  // preserves their order in data/applications.js; all other catalog entries are skipped.
+  const spotlightGames = games.filter((game) => game.hero === 'true');
   const heroDots = document.getElementById('heroDots');
   const heroCover = document.getElementById('heroCover');
   const heroTitle = document.getElementById('heroTitle');
@@ -91,6 +97,7 @@
   });
   if (spotlightGames.length < 2) heroDots.hidden = true;
   showSpotlight(0);
+  if (!spotlightGames.length) document.querySelector('.cover-wrapper').hidden = true;
 
   const reduceMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
   let spotlightTimer;
@@ -111,25 +118,46 @@
   restartSpotlightTimer();
 
   renderSections();
-  catalog.forEach((game) => grid.append(makeCard(game)));
-  const count = document.getElementById('searchCount');
-  if (count) count.textContent = `${catalog.length} games`;
+  document.getElementById('toolsGrid').replaceChildren(...tools.map(makeCard));
+  document.getElementById('toolsCount').textContent = `${tools.length} tools`;
+  document.getElementById('toolsEmpty').hidden = tools.length > 0;
+  (window.EXST_COLLECTIONS || []).forEach((collection) => {
+    const members = collection.applications.map((id) => tools.find((app) => app.id === id)).filter(Boolean);
+    if (!members.length) return;
+    const section = document.createElement('section'); section.className = 'flix-row';
+    const heading = document.createElement('h2'); heading.textContent = collection.title;
+    const cards = document.createElement('div'); cards.className = 'row-posters';
+    cards.append(...members.map(makeCard)); section.append(heading, cards);
+    document.getElementById('toolsCollections').append(section);
+  });
+  function renderSearch() {
+    const query = document.getElementById('searchInput').value.trim().toLowerCase();
+    const direction = document.getElementById('sortSelect').value === 'za' ? -1 : 1;
+    const matches = catalog.filter((app) => app.title.toLowerCase().includes(query))
+      .sort((a, b) => direction * a.title.localeCompare(b.title));
+    grid.replaceChildren(...matches.map(makeCard));
+    document.getElementById('searchCount').textContent = `${matches.length} applications (games and tools)`;
+    document.getElementById('searchEmpty').hidden = matches.length > 0;
+  }
+  renderSearch();
+  document.getElementById('searchInput').addEventListener('input', renderSearch);
+  document.getElementById('sortSelect').addEventListener('change', renderSearch);
 
-  // The spotlight is controlled only by the hero=true flag in data/games.js.
+  // The spotlight is controlled only by the hero=true flag in data/applications.js.
   // This editor controls visibility of tag-based rows and collections only.
   document.getElementById('editSections')?.addEventListener('click', () => {
     const dialog = document.getElementById('sectionsDialog');
     const content = document.getElementById('sectionsEditor');
     content.replaceChildren();
     const heading = document.createElement('h3'); heading.textContent = 'Home page sections'; content.append(heading);
-    const tags = [...new Set(catalog.flatMap((game) => (game.tags || 'Games').split(',').map((tag) => tag.trim()).filter(Boolean)))];
+    const tags = [...new Set(games.flatMap((game) => (game.tags || 'Games').split(',').map((tag) => tag.trim()).filter(Boolean)))];
     tags.forEach((tag) => {
       const label = document.createElement('label'); label.className = 'section-editor-toggle';
       const checkbox = document.createElement('input'); checkbox.type = 'checkbox'; checkbox.checked = settings[tag] !== false;
       checkbox.dataset.section = tag;
       label.append(checkbox, document.createTextNode(` Show ${tag} section`)); content.append(label);
     });
-    (window.EXST_FOLDERS || []).forEach((folder) => {
+    (window.EXST_COLLECTIONS || []).forEach((folder) => {
       const label = document.createElement('label'); label.className = 'section-editor-toggle';
       const checkbox = document.createElement('input'); checkbox.type = 'checkbox';
       checkbox.checked = settings[`collection:${folder.id}`] !== false;
@@ -149,17 +177,30 @@
   });
   document.getElementById('closeSections')?.addEventListener('click', () => document.getElementById('sectionsDialog').close());
 
-  document.querySelectorAll('#footerBar button').forEach((button) => button.addEventListener('click', () => {
-    const name = button.getAttribute('ref');
+  function navigate() {
+    const requested = location.hash.slice(1) || 'home';
+    const name = ['home', 'tools', 'search', 'about', 'notifications'].includes(requested) ? requested : 'home';
     document.querySelectorAll('.flix-page').forEach((page) => { page.hidden = page.id !== `page-${name}`; });
-    document.querySelectorAll('#footerBar button').forEach((item) => item.classList.toggle('active', item === button));
+    document.querySelectorAll('#footerBar button').forEach((item) => {
+      const active = item.getAttribute('ref') === name;
+      item.classList.toggle('active', active);
+      if (active) item.setAttribute('aria-current', 'page'); else item.removeAttribute('aria-current');
+    });
+  }
+  document.querySelectorAll('#footerBar button').forEach((button) => button.addEventListener('click', () => {
+    location.hash = button.getAttribute('ref');
   }));
-  document.getElementById('searchInput')?.addEventListener('input', (event) => {
-    const query = event.target.value.toLowerCase();
-    grid.replaceChildren(...catalog.filter((game) => game.title.toLowerCase().includes(query)).map(makeCard));
-  });
+  document.querySelectorAll('[data-goto]').forEach((button) => button.addEventListener('click', () => {
+    location.hash = button.dataset.goto;
+  }));
+  window.addEventListener('hashchange', navigate);
+  navigate();
+  let detailsReturnFocus;
+  let detailsCloseTimer;
   function showDetails(game) {
     if (!game) return;
+    clearTimeout(detailsCloseTimer);
+    detailsReturnFocus = document.activeElement;
     document.getElementById('detailsHeadTitle').textContent = game.title;
     document.getElementById('detailsTitle').textContent = game.title;
     document.getElementById('detailsMeta').textContent = game.version || '';
@@ -170,17 +211,27 @@
     }));
     document.getElementById('detailsCover').style.backgroundImage = `linear-gradient(to bottom, transparent 45%, #101010 100%), url("website/${game.icon || 'assets/images/default-game.svg'}")`;
     document.getElementById('detailsDirect').href = `website/${game.path}`;
-    document.getElementById('detailsPlay').dataset.play = game.id;
+    const launch = document.getElementById('detailsPlay');
+    launch.dataset.play = game.id;
+    launch.lastChild.textContent = game.location === 'tools' ? 'Open tool' : 'Play';
     const panel = document.getElementById('detailsPage');
     panel.hidden = false;
     requestAnimationFrame(() => panel.classList.add('open'));
     document.body.classList.add('noscroll');
+    document.getElementById('pages').inert = true;
+    document.getElementById('headerBar').inert = true;
+    document.getElementById('footerBar').inert = true;
+    document.getElementById('detailsClose').focus();
   }
   function closeDetails() {
     const panel = document.getElementById('detailsPage');
     panel.classList.remove('open');
     document.body.classList.remove('noscroll');
-    window.setTimeout(() => { panel.hidden = true; }, 220);
+    document.getElementById('pages').inert = false;
+    document.getElementById('headerBar').inert = false;
+    document.getElementById('footerBar').inert = false;
+    detailsReturnFocus?.focus();
+    detailsCloseTimer = window.setTimeout(() => { panel.hidden = true; }, 220);
   }
   document.getElementById('detailsClose')?.addEventListener('click', closeDetails);
   document.addEventListener('keydown', (event) => { if (event.key === 'Escape' && !document.getElementById('detailsPage').hidden) closeDetails(); });
@@ -193,13 +244,13 @@
       return;
     }
     const button = event.target.closest('[data-play]'); if (!button) return;
-    const game = catalog.find((item) => item.id === button.dataset.play) || hero; if (!game) return;
-    const mode = localStorage.getItem('openMode') || 'page';
+    const game = catalog.find((item) => item.id === button.dataset.play); if (!game) return;
+    const mode = readPreference('openMode', 'page');
     const url = `website/${game.path}`;
     if (mode === 'same') location.href = url;
     else if (mode === 'new') window.open(url, '_blank', 'noopener');
     else location.href = `website/game.html?id=${encodeURIComponent(game.id)}`;
   });
-  document.getElementById('openMode')?.addEventListener('change', (event) => localStorage.setItem('openMode', event.target.value));
-  const mode = document.getElementById('openMode'); if (mode) mode.value = localStorage.getItem('openMode') || 'page';
+  document.getElementById('openMode')?.addEventListener('change', (event) => { try { localStorage.setItem('openMode', event.target.value); } catch (_) { /* storage may be blocked */ } });
+  const mode = document.getElementById('openMode'); if (mode) mode.value = readPreference('openMode', 'page');
 })();

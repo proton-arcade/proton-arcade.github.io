@@ -32,9 +32,10 @@
     />
     <link
       rel="icon"
-      href="website/assets/images/favicon.svg"
+      href="website/assets/images/favicon.svg?v=red-2"
       type="image/svg+xml"
     />
+    <link rel="icon" href="favicon.ico?v=red-2" sizes="16x16 32x32 48x48" />
     <link rel="stylesheet" href="website/assets/css/flix.css" />
   </head>
   <body class="flix">
@@ -90,6 +91,20 @@
         </div>
       </section>
 
+      <!-- TOOLS: populated from location=tools in applications.js -->
+      <section class="flix-page" id="page-tools" aria-label="Tools" hidden>
+        <div class="flix-subpage">
+          <h1>Tools</h1>
+          <p class="sub" id="toolsCount"></p>
+          <div id="toolsCollections"></div>
+          <div class="search-grid" id="toolsGrid" aria-live="polite"></div>
+          <div class="empty-state" id="toolsEmpty" hidden>
+            <h3>No tools yet</h3>
+            <p>Tools will appear here as they are added to the library.</p>
+          </div>
+        </div>
+      </section>
+
       <!-- SEARCH -->
       <section class="flix-page" id="page-search" aria-label="Search" hidden>
         <div class="flix-subpage">
@@ -101,7 +116,7 @@
               type="search"
               id="searchInput"
               placeholder="Search"
-              aria-label="Search games"
+              aria-label="Search games and tools"
               autocomplete="off"
             />
           </label>
@@ -111,17 +126,17 @@
           <div class="sort-row">
             <i data-icon="sort"></i>
             <label for="sortSelect">Sort</label>
-            <select id="sortSelect" aria-label="Sort games">
+            <select id="sortSelect" aria-label="Sort applications">
 
               <option value="az">Name: A–Z</option>
-              <option value="played">Most played</option>
+              <option value="za">Name: Z–A</option>
             </select>
           </div>
           <div class="search-grid" id="searchGrid" aria-live="polite"></div>
           <div class="empty-state" id="searchEmpty" hidden>
             <i data-icon="search"></i>
-            <h3>No games found</h3>
-            <p>Try another title or choose a different category.</p>
+            <h3>No applications found</h3>
+            <p>Try another title.</p>
             <button class="primary-button" data-goto="#home">Explore games</button>
           </div>
         </div>
@@ -141,14 +156,14 @@
           <h1>Prefs</h1>
 
           <div class="pref-block">
-            <label for="openMode">Open game?</label>
+            <label for="openMode">Open application?</label>
             <select id="openMode">
               <option value="page">Open in the player</option>
               <option value="same">Replace this tab</option>
-              <option value="new">Open game in a new tab</option>
+              <option value="new">Open in a new tab</option>
             </select>
           </div>
-          </button>
+          <button class="primary-button" id="editSections" type="button">Edit home sections</button>
         </div>
       </section>
     </main>
@@ -157,6 +172,9 @@
     <footer id="footerBar" aria-label="Site navigation">
       <button ref="home" class="active" aria-label="Home">
         <i data-icon="home"></i><span>Home</span>
+      </button>
+      <button ref="tools" aria-label="Tools">
+        <i data-icon="tools"></i><span>Tools</span>
       </button>
       <button ref="search" aria-label="Search">
         <i data-icon="search"></i><span>Search</span>
@@ -218,8 +236,8 @@
       </div>
     </dialog>
     <div class="toast" id="toast" role="status"></div>
-    <script src="website/data/games.js"></script>
-    <script src="website/data/folders.js"></script>
+    <script src="website/data/applications.js"></script>
+    <script src="website/data/collections.js"></script>
     <script src="website/assets/js/icons.js"></script>
     <script src="website/assets/js/config-loader.js"></script>
     <script src="website/assets/js/flix.js"></script>

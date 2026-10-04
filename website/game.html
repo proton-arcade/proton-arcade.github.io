@@ -18,13 +18,14 @@
     />
     <link
       rel="icon"
-      href="assets/images/favicon.svg"
+      href="assets/images/favicon.svg?v=red-2"
       type="image/svg+xml"
     />
     <link
       rel="apple-touch-icon"
-      href="assets/images/favicon.svg"
+      href="assets/images/favicon.svg?v=red-2"
     />
+    <link rel="icon" href="../favicon.ico?v=red-2" sizes="16x16 32x32 48x48" />
     <link rel="stylesheet" href="assets/css/arcade.css" />
     <link rel="stylesheet" href="assets/css/flix.css" />
   </head>
@@ -45,7 +46,7 @@
       >
       <a class="flix-mini-logo" href="../index.html">ExstArcade</a>
       <div class="player-title">
-        <h1 id="gameTitle">Loading game…</h1><span id="gameMeta"></span>
+        <h1 id="gameTitle">Loading application…</h1><span id="gameMeta"></span>
       </div>
       <div class="player-actions">
         <button id="fullscreenGame" type="button">Fullscreen</button>
@@ -63,17 +64,17 @@
         allowfullscreen
       ></iframe>
       <section id="gameFallback" class="frame-fallback" hidden>
-        <h1>That game file is missing</h1>
+        <h1>That application file is missing</h1>
         <p>
           The catalog points at the file below (relative to the
-          <code>website/</code> folder), but it is not there. Drop the game
+          <code>website/</code> folder), but it is not there. Drop the application
           file in that spot, or fix the <code>path=</code> line in
-          <code>data/games.js</code>.
+          <code>data/applications.js</code>.
         </p>
         <code id="missingPath"></code>
       </section>
     </main>
-    <script src="data/games.js"></script>
+    <script src="data/applications.js"></script>
     <script src="assets/js/config-loader.js"></script>
     <script src="assets/js/game.js"></script>
   </body>

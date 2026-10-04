@@ -110,12 +110,12 @@ function inspectPng(bytes) {
 }
 
 function catalogRecords() {
-    const catalogPath = join(WEBSITE, 'data', 'games.js');
+    const catalogPath = join(WEBSITE, 'data', 'applications.js');
     const source = readFileSync(catalogPath, 'utf8');
-    const match = source.match(/window\.EXST_GAMES_TEXT\s*=\s*`([\s\S]*?)`\s*;/);
-    if (!match) throw new Error('could not find window.EXST_GAMES_TEXT template in ' + rel(catalogPath));
+    const match = source.match(/window\.EXST_APPLICATIONS_TEXT\s*=\s*`([\s\S]*?)`\s*;/);
+    if (!match) throw new Error('could not find window.EXST_APPLICATIONS_TEXT template in ' + rel(catalogPath));
 
-    return match[1].split(/^\[game\]\s*$/m).slice(1).map((block) => {
+    return match[1].split(/^\[(?:application|game)\]\s*$/m).slice(1).map((block) => {
         const fields = {};
         for (const line of block.split(/\r?\n/)) {
             const field = /^(id|path|icon)=(.*)$/.exec(line.trim());
@@ -175,7 +175,7 @@ try {
 const catalogIssues = [];
 const iconFingerprints = new Map();
 let referenceCount = 0;
-if (records.length === 0) catalogIssues.push('catalog contains no [game] entries');
+if (records.length === 0) catalogIssues.push('catalog contains no [application] entries');
 for (const entry of records) {
     if (!entry.id) catalogIssues.push('catalog entry is missing id');
     for (const key of ['path', 'icon']) {

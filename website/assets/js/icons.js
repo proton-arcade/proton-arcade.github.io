@@ -1,6 +1,7 @@
 (function () {
   const paths = {
     home: '<path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1z"/>',
+    tools: '<path d="m14 6 4 4M4 20l8-8M14 3a6 6 0 0 0-6 8L3 16a3 3 0 0 0 5 5l5-5a6 6 0 0 0 8-8l-4 4-5-5 4-4z"/>',
     search: '<circle cx="10.8" cy="10.8" r="6.8"/><path d="m16 16 5 5"/>',
     info: '<circle cx="12" cy="12" r="9"/><path d="M12 11v6m0-10h.01"/>',
     add: '<path d="M12 5v14M5 12h14"/>',

@@ -1,6 +1,13 @@
 /*
-template
-[game]
+Application catalog — copy the template below for each application.
+Set location=games or location=tools (no parentheses).
+Paths and icons are relative to website/; location does not change the path.
+Missing location defaults to games for older entries.
+hero=true only applies to games on the home page.
+
+Template:
+[application]
+location=games
 id=
 title=
 path=
@@ -8,14 +15,13 @@ icon=
 version=
 description=
 tags=
-badge=
-featured=
 hero=
 */
 
-window.EXST_GAMES_TEXT = `
+window.EXST_APPLICATIONS_TEXT = `
 
-[game]
+[application]
+location=games
 id=Ampler-Launcher
 title=Ampler Launcher
 path=games/Ealgercraft/Ampler-Launcher/index.html
@@ -26,7 +32,8 @@ tags=Survival, Simulator, Adventure, Keyboard required, First person
 featured=true
 hero=true
 
-[game]
+[application]
+location=games
 id=FNAF-1
 title=Five nights at Freddy's
 path=games/Five-nights-at-Freddys/one/index.html
@@ -37,7 +44,8 @@ tags=Horror, Survival, Jump scare, Mouse only, First person
 featured=true
 hero=true
 
-[game]
+[application]
+location=games
 id=FNAF-2
 title=Five nights at Freddy's 2
 path=games/Five-nights-at-Freddys/two/index.html
@@ -48,7 +56,8 @@ tags=Horror, Survival, Jump scare, Keyboard required, First person
 featured=true
 hero=true
 
-[game]
+[application]
+location=games
 id=FNAF-3
 title=Five nights at Freddy's 3
 path=games/Five-nights-at-Freddys/three/index.html
@@ -59,7 +68,8 @@ tags=Horror, Survival, Jump scare, Mouse only, First person
 featured=true
 hero=true
 
-[game]
+[application]
+location=games
 id=FNAF-4
 title=Five nights at Freddy's 4
 path=games/Five-nights-at-Freddys/four/index.html
@@ -70,7 +80,8 @@ tags=Horror, Survival, Jump scare, Keyboard required, First person
 featured=true
 hero=true
 
-[game]
+[application]
+location=games
 id=FNAF-SL
 title=Five nights at Freddy's: Sister Location
 path=games/Five-nights-at-Freddys/sister-location/index.html
@@ -81,7 +92,8 @@ tags=Horror, Survival, Jump scare, Keyboard required, First person
 featured=true
 hero=true
 
-[game]
+[application]
+location=games
 id=Spacebar-clicker
 title=Spacebar clicker
 path=games/Spacebar-clicker/index.html
@@ -92,7 +104,8 @@ tags=Clicker, Simulator, Keyboard required
 featured=false
 hero=false
 
-[game]
+[application]
+location=games
 id=Baldis-basics
 title=Baldis basics
 path=games/Baldis-basics/index.html
@@ -103,7 +116,8 @@ tags=Horror, Stealth, First person, Keyboard required
 featured=false
 hero=true
 
-[game]
+[application]
+location=games
 id=kart-bros
 title=Kart Bros
 path=games/Kart-bros/index.html
@@ -113,7 +127,8 @@ description=Hug the turns, drift past the pack and fire power-ups at your friend
 tags=Racing, Arcade, Multiplayer, Keyboard required, 3D
 hero=true
 
-[game]
+[application]
+location=games
 id=retro-bowl
 title=Retro Bowl
 path=games/Retro-bowl/index.html
@@ -123,7 +138,8 @@ description=The throwback football game everybody kept coming back to: run the f
 tags=Sports, Football, Management, Mouse only, Pixel art
 hero=true
 
-[game]
+[application]
+location=games
 id=pac-man
 title=Pac-Man
 path=games/Pac-man/index.html
@@ -133,7 +149,8 @@ description=The arcade classic: clear the maze, dodge the ghosts and chase the h
 tags=Arcade, Classic, Maze, Keyboard required
 hero=true
 
-[game]
+[application]
+location=games
 id=football-bros
 title=Football Bros
 path=games/Football-bros/index.html
@@ -143,7 +160,8 @@ description=Bone-crushing hits and long bombs. A fast, simple football game with
 tags=Sports, Football, Multiplayer, Keyboard required
 hero=true
 
-[game]
+[application]
+location=games
 id=geometry-dash-lite
 title=Geometry Dash Lite
 path=games/Geometry-Dash-Lite/index.html
@@ -153,7 +171,8 @@ description=One button, one rhythm: jump the spikes, ride the walls and try not 
 tags=Rhythm, Platformer, One button, Keyboard required
 hero=true
 
-[game]
+[application]
+location=games
 id=backrooms
 title=Backrooms
 path=games/Backrooms/index.html
@@ -163,7 +182,8 @@ description=Noclip out of reality and wander the endless yellow corridors. Explo
 tags=Horror, First person, Exploration, Keyboard required, 3D
 hero=true
 
-[game]
+[application]
+location=games
 id=flappy-bird
 title=Flappy Bird
 path=games/Flappy-bird/index.html
@@ -173,7 +193,8 @@ description=Tap to flap, thread the pipes and see how far you can get in the gam
 tags=Arcade, Endless runner, One button, Mouse only
 hero=false
 
-[game]
+[application]
+location=games
 id=drift-boss
 title=Drift Boss
 path=games/Drift-boss/index.html
@@ -183,7 +204,8 @@ description=One-button drifting: hold to swing the car around the corner and kee
 tags=Racing, Arcade, One button, Mouse only
 hero=false
 
-[game]
+[application]
+location=games
 id=bloxorz
 title=Bloxorz
 path=games/Bloxorz/index.html
@@ -193,7 +215,8 @@ description=Roll the block, find the hole, do not fall off the edge. A brain-ben
 tags=Puzzle, Flash, Keyboard required
 hero=false
 
-[game]
+[application]
+location=games
 id=minesweeper
 title=Minesweeper
 path=games/Minesweeper/index.html
@@ -203,7 +226,8 @@ description=The timeless logic puzzle: flag the mines, clear the board and try n
 tags=Puzzle, Classic, Mouse only
 hero=false
 
-[game]
+[application]
+location=games
 id=google-dino
 title=Google Dino
 path=games/Google-dino/index.html
@@ -220,9 +244,9 @@ hero=false
 
 
 
-demo
 # TEST GAME: remove this entry block and website/games/index.html to remove the demo.
-[game]
+[application]
+location=games
 id=test
 title=test
 path=games/index.html
