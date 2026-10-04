@@ -1689,6 +1689,12 @@ body.folder-page {
 }
 .row-posters .game-card span { font-weight: 700; }
 .flix-row > h2 { display: flex; align-items: center; gap: 9px; font-size: 1.1rem; margin: 22px 12px 9px; }
+/* Rows rendered inside a subpage (tool collections on the Tools page) already
+   sit within the subpage's own padding, so drop the home page's 12px gutter.
+   Without this the row heading and its cards land off to the side of the
+   page heading and the grid below it. */
+.flix-subpage .flix-row > h2 { margin-left: 0; margin-right: 0; }
+.flix-subpage .row-posters { padding-left: 0; }
 .collection-icon { width: 22px; height: 22px; object-fit: contain; flex: 0 0 auto; }
 [data-icon] { display: inline-flex; align-items: center; justify-content: center; }
 [data-icon] svg { display: block; width: 100%; height: 100%; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; fill: none; }
