@@ -605,15 +605,39 @@ body.flix .icon {
   margin: 0 0 16px;
 }
 
+.primary-button,
 .empty-state .primary-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
   background: var(--flix-red);
   color: #fff !important;
   border: 0;
-  border-radius: 4px;
-  padding: 10px 22px;
+  border-radius: 6px;
+  padding: 11px 22px;
   font-family: inherit;
   font-size: 100%;
   font-weight: 700;
+  line-height: 1.2;
+  cursor: pointer;
+  text-decoration: none;
+  transition: background-color 150ms ease, transform 100ms ease, opacity 150ms ease;
+}
+
+.primary-button:hover {
+  background: #e84542;
+  opacity: 1;
+}
+
+.primary-button:active {
+  transform: translateY(1px);
+}
+
+.primary-button:disabled {
+  background: #4a2727;
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 /* Catalog check: shown when an edit to data/applications.js or data/collections.js
@@ -792,6 +816,10 @@ body.catalog-broken .hero-shade {
 .stat-row span {
   color: var(--flix-muted);
   font-size: 80%;
+}
+
+.flix-subpage h1 + .pref-block {
+  margin-top: 14px;
 }
 
 .pref-block {
