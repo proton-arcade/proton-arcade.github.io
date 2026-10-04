@@ -30,8 +30,12 @@
   function renderSections() {
     rows.replaceChildren();
     const groups = new Map();
+    // Always include an "All Games" group so that every game appears
+    // in the main Games section regardless of whether it has tags.
+    groups.set('Games', []);
     games.forEach((game) => {
-      (game.tags || 'Games').split(',').map((tag) => tag.trim()).filter(Boolean).forEach((tag) => {
+      groups.get('Games').push(game);
+      (game.tags || '').split(',').map((tag) => tag.trim()).filter(Boolean).forEach((tag) => {
         if (settings[tag] === false) return;
         if (!groups.has(tag)) groups.set(tag, []);
         groups.get(tag).push(game);
@@ -54,7 +58,12 @@
       const collectionGames = folder.applications.map((id) => games.find((game) => game.id === id)).filter(Boolean);
       if (collectionGames.length) appendRow(folder.title, collectionGames);
     });
-    groups.forEach((items, label) => appendRow(label, items));
+    // Render the "Games" row first, then other tag groups (respecting user visibility settings).
+    if (settings['Games'] !== false) appendRow('Games', groups.get('Games'));
+    groups.forEach((items, label) => {
+      if (label === 'Games') return;
+      appendRow(label, items);
+    });
   }
 
   // Only games explicitly marked `hero=true` belong in the banner. Filtering
@@ -150,7 +159,7 @@
     const content = document.getElementById('sectionsEditor');
     content.replaceChildren();
     const heading = document.createElement('h3'); heading.textContent = 'Home page sections'; content.append(heading);
-    const tags = [...new Set(games.flatMap((game) => (game.tags || 'Games').split(',').map((tag) => tag.trim()).filter(Boolean)))];
+    const tags = [...new Set(['Games', ...games.flatMap((game) => (game.tags || '').split(',').map((tag) => tag.trim()).filter(Boolean))])];
     tags.forEach((tag) => {
       const label = document.createElement('label'); label.className = 'section-editor-toggle';
       const checkbox = document.createElement('input'); checkbox.type = 'checkbox'; checkbox.checked = settings[tag] !== false;
