@@ -237,6 +237,17 @@ description=The T-Rex runner that shows up when the internet does not. Jump, duc
 tags=Endless runner, Classic, Keyboard required, One button
 hero=false
 
+[application]
+location=games
+id=granny
+title=Granny
+path=games/Granny/index.html
+icon=games/Granny/icon.png
+version=Offline HTML build
+description=You wake up locked in Granny's house with five days to get out. She hears every door, every dropped plate and every footstep, so search quietly, remember where things are and find the way out before she finds you.
+tags=Horror, Survival, First person, Jump scare, Keyboard required, 3D
+hero=false
+
 
 
 

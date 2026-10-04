@@ -17,7 +17,7 @@ const data = { window: {} };
 vm.runInNewContext(source('website/data/applications.js'), data);
 vm.runInNewContext(source('website/data/collections.js'), data);
 const live = load(data.window.EXST_APPLICATIONS_TEXT, data.window.EXST_COLLECTIONS_TEXT);
-assert.equal(live.EXST_APPLICATIONS.length, 20);
+assert.equal(live.EXST_APPLICATIONS.length, 21);
 assert.equal(live.EXST_COLLECTIONS.length, 3);
 assert.equal(live.EXST_CATALOG_WARNINGS.length, 0);
 for (const app of live.EXST_APPLICATIONS) {

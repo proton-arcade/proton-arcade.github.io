@@ -56,6 +56,7 @@ website/games/Pac-man/index.html -text -diff
 website/games/Flappy-bird/index.html -text -diff
 website/games/Minesweeper/index.html -text -diff
 website/games/Google-dino/index.html -text -diff
+website/games/Granny/index.html -text -diff
 
 # Keep the short provenance notes beside individual builds readable/diffable;
 # the large self-contained HTML files remain protected by the rule above.
