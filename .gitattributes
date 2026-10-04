@@ -41,6 +41,22 @@ website/**/*.svg   text eol=lf
 website/games/Five-nights-at-Freddys/*/index.html -text -diff
 website/games/Ealgercraft/Ampler-Launcher/website/mc/** -text -diff
 
+# The Offline-HTML-Games-Pack ports (see "Offline games pack" in the README).
+# Every one of them is a single self-contained file with an embedded payload:
+# their base64/zip data legitimately contains CRLF byte pairs and the vendored
+# bytes are kept intact, so no line-ending conversion and no diffing.
+website/games/Kart-bros/index.html -text -diff
+website/games/Football-bros/index.html -text -diff
+website/games/Backrooms/index.html -text -diff
+website/games/Geometry-Dash-Lite/index.html -text -diff
+website/games/Bloxorz/index.html -text -diff
+website/games/Drift-boss/index.html -text -diff
+website/games/Retro-bowl/index.html -text -diff
+website/games/Pac-man/index.html -text -diff
+website/games/Flappy-bird/index.html -text -diff
+website/games/Minesweeper/index.html -text -diff
+website/games/Google-dino/index.html -text -diff
+
 # Keep the short provenance notes beside individual builds readable/diffable;
 # the large self-contained HTML files remain protected by the rule above.
 website/games/Ealgercraft/Ampler-Launcher/website/mc/**/README.md text eol=lf diff
