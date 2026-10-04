@@ -616,7 +616,7 @@ body.flix .icon {
   font-weight: 700;
 }
 
-/* Catalog check: shown when an edit to data/games.js or data/folders.js
+/* Catalog check: shown when an edit to data/applications.js or data/collections.js
    needs attention, so a half-saved entry is never silent. */
 
 .catalog-notice {
@@ -2130,3 +2130,6 @@ body.add-page #headerBar .top-nav {
     display: none;
   }
 }
+
+/* Explicitly honor hidden for flex/grid empty states and an empty spotlight. */
+.empty-state[hidden], .cover-wrapper[hidden] { display: none; }

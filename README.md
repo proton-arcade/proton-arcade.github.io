@@ -34,10 +34,11 @@ server, see below.)
 Two files, both plain text read by `website/assets/js/config-loader.js`.
 Neither needs a rebuild — edit, reload, done.
 
-`website/data/games.js` — one `[game]` block per game:
+`website/data/applications.js` — one `[application]` block per game or tool:
 
 ```
-[game]
+[application]
+location=games
 id=FNAF-1
 title=Five nights at Freddy's
 path=games/Five-nights-at-Freddys/one/index.html
@@ -51,6 +52,7 @@ hero=true
 
 | Field | Used for |
 |---|---|
+| `location` | `games` or `tools`; controls where the application appears (defaults to `games`) |
 | `id` | the key used by `?id=` in the player page and by collections |
 | `title` | card title, player title |
 | `path` | the game page, relative to `website/` |
@@ -60,18 +62,24 @@ hero=true
 | `tags` | comma-separated chips, also used by the genre browse rows |
 | `hero` | `hero=true` puts the game in the home banner carousel |
 
-`featured` and `badge` still appear in the template comment at the top of
-`data/games.js`, but nothing reads them — leave them out of new entries.
+`featured` and `badge` are legacy fields and are not used.
 
-`website/data/folders.js` — one `[folder]` block per home-page collection, whose
-`games=` value is a comma-separated list of game **ids** (not paths):
+To add a tool, copy the template in `applications.js` and set `location=tools`.
+Keep its actual `path` and `icon` relative to `website/`; moving an entry between
+sections does not require moving its files. Tools appear in the Tools tab and
+global search, but not the games spotlight or home rows. Collections are split
+by each member’s location. Legacy `[game]`, `[folder]`, and `games=` syntax
+is still accepted. Invalid locations and duplicate IDs produce catalog warnings.
+
+`website/data/collections.js` — one `[collection]` block per home-page collection, whose
+`applications=` value is a comma-separated list of game **ids** (not paths):
 
 ```
-[folder]
+[collection]
 available=true
 id=Ealgercraft
 title=Ealgercraft
-games=Ampler-Launcher
+applications=Ampler-Launcher
 ```
 
 Set `available=false` to hide a collection without deleting its games.
@@ -80,11 +88,11 @@ Set `available=false` to hide a collection without deleting its games.
 
 1. Drop the game in `website/games/<name>/` with an `index.html` (and an
    `icon.png` if you have one).
-2. Add a `[game]` block to `website/data/games.js`.
-3. Add its `id` to a `[folder]` block in `website/data/folders.js` if it should
+2. Add a `[application]` block to `website/data/applications.js`.
+3. Add its `id` to a `[collection]` block in `website/data/collections.js` if it should
    sit in a collection.
 
-The player page shows a "That game file is missing" panel with the exact path
+The player page shows a "That application file is missing" panel with the exact path
 it expected if step 1 and step 2 disagree.
 
 ## What is in here
@@ -292,3 +300,9 @@ builds, and all eleven games in the Offline games pack, are sourced from
 The arcade card illustrations are original artwork; the pack games' card art is
 a screenshot of each game's own title screen. Games remain the property of
 their respective authors — this repository only serves them.
+
+### Catalog validation
+
+Run `node website/tools/check-catalog.mjs` to check locations, legacy syntax,
+validation warnings, catalog paths, and page asset references.
+Run `node website/tools/check-images.mjs` to audit catalog images and file signatures.
