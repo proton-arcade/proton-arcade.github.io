@@ -95,6 +95,7 @@ it expected if step 1 and step 2 disagree.
 | `website/games/Five-nights-at-Freddys/` | FNAF 1–4 and Sister Location | full builds, playable |
 | `website/games/Baldis-basics/` | Baldi's Basics | placeholder page, in the catalog |
 | `website/games/Spacebar-clicker/` | Spacebar Clicker | placeholder page, in the catalog |
+| `website/games/{Kart-bros,Football-bros,Retro-bowl,Pac-man,Geometry-Dash-Lite,Flappy-bird,Google-dino,Drift-boss,Backrooms,Bloxorz,Minesweeper}/` | Offline games pack | full builds, playable |
 | `website/games/index.html` | test entry (`id=test`) | placeholder page, not in a collection |
 | `website/games/gam temp/` | — | archived handoff file; not part of the site |
 
@@ -197,6 +198,47 @@ Adding a build is a two-step change upstream (drop
 `website/mc/<id>/index.html`, add an entry to `website/js/clients.js`); the
 version dropdown and the Play button follow that manifest automatically.
 
+## Offline games pack
+
+`website/games/` also carries eleven standalone builds from the
+[Offline-HTML-Games-Pack](https://github.com/CoolDude2349/Offline-HTML-Games-Pack):
+Kart Bros, Football Bros, Retro Bowl, Pac-Man, Geometry Dash Lite, Flappy Bird,
+Google Dino, Drift Boss, Backrooms, Bloxorz and Minesweeper. Each is one
+self-contained HTML file in its own folder, so a game is one file plus its card
+art — no extra assets to chase.
+
+They are vendored from that pack's `offline/` folder and each file is kept byte
+for byte apart from a short, explicit list of edits. The pack wraps its files
+for an ad-supported site, so the arcade strips what would phone home and points
+the broken externals at local files:
+
+| Game | Edits on top of the offline guard |
+|---|---|
+| Kart Bros | removed the AdinPlay ad snippet, the Google Tag Manager container and loader, the GA/gtag config, the MSN/MS-Start loader and the `recordsession.php` session tracker (`SendEvent`/`GA4_SendEvent` stay as inert helpers). Also removed the `TemplateData/sw.js` service-worker registration, which only ever 404s |
+| Football Bros | the same ad, analytics and `recordsession.php` removals as Kart Bros |
+| Drift Boss | removed the GA stub, re-pointed the engine's sound paths from a dead `editmysite.com` host to local `media/audio/…` paths (the audio itself is already inline), and guarded a Google Gadgets relay call that used to throw |
+| Google Dino | dropped the remote `google.com/jsapi` script tag and guarded the `parent.maeExportApis_()` call that threw outside its original portal |
+| Geometry Dash Lite | removed the `<base href="https://ixl.com/">` that pointed relative URLs at another site |
+| Pac-Man, Flappy Bird | removed the TurboWarp cloud-variable WebSocket provider |
+| Backrooms, Bloxorz, Retro Bowl, Minesweeper | vendored unchanged apart from the offline guard |
+
+Every one of the eleven additionally gets the same **offline guard** near the
+top of the page: a short script that drops any request which would leave the
+arcade's own origin (http/https/ws/wss to another host) while letting local
+files, `blob:` URLs and `data:` URLs through untouched. That is what keeps the
+builds honest with the "nothing reaches the network at runtime" rule below —
+Unity analytics beacons, TurboWarp cloud variables, the football game's server
+pings and Firebase sign-in are inert rather than merely failing. None of this
+touches the game payload itself: engine code inside each build is unmodified,
+and the guard is the only thing added to four of the eleven files.
+
+Features that genuinely need the internet are unavailable offline, and say so
+on screen: online multiplayer in Kart Bros and Football Bros, Google sign-in in
+Football Bros, and cloud-variable leaderboards in the TurboWarp builds. Local
+saves (Retro Bowl, Minesweeper, Football Bros) continue to work in the browser.
+Card art for these eleven is a screenshot of each game's own title screen,
+captured at the catalog's 1272×787.
+
 ## Repo notes
 
 **The bundled games are binary blobs.** A build such as the FNAF pages or
@@ -214,7 +256,8 @@ the small hand-written pages in that folder.
 (the launcher self-hosts Roboto) and the game builds are all local files. The
 only optional network use in the whole repo is Ampler Launcher's
 `website/server/fetch-server.sh`, which a human runs deliberately to fetch the
-multiplayer server jar; it is not part of the site.
+multiplayer server jar; it is not part of the site. The eleven Offline games
+pack builds carry the same rule with their own offline guard — see above.
 
 **Verify a change** by serving the repo (`python3 -m http.server 8000`) and
 walking the home page, a collection and a game. The repo also has a
@@ -238,7 +281,8 @@ into a scratch folder or with `--no-save`, they are not part of the site.
 Eaglercraft and EaglerXServer by lax1dude and contributors; the Ampler Launcher
 UI and original game bundles come from
 [proton-arcade](https://github.com/proton-arcade). The Beta 1.3 and Alpha 1.2.6
-builds are sourced from
+builds, and all eleven games in the Offline games pack, are sourced from
 [CoolDude2349/Offline-HTML-Games-Pack](https://github.com/CoolDude2349/Offline-HTML-Games-Pack).
-The arcade card illustrations are original artwork. Games remain the property
-of their respective authors — this repository only serves them.
+The arcade card illustrations are original artwork; the pack games' card art is
+a screenshot of each game's own title screen. Games remain the property of
+their respective authors — this repository only serves them.

@@ -103,6 +103,116 @@ tags=Horror, Stealth, First person, Keyboard required
 featured=false
 hero=true
 
+[game]
+id=kart-bros
+title=Kart Bros
+path=games/Kart-bros/index.html
+icon=games/Kart-bros/icon.png
+version=Offline HTML build
+description=Hug the turns, drift past the pack and fire power-ups at your friends in a fast, easy-to-pick-up kart racer. Quick Play, a Bro Cup and online lobbies for up to six players.
+tags=Racing, Arcade, Multiplayer, Keyboard required, 3D
+hero=true
+
+[game]
+id=retro-bowl
+title=Retro Bowl
+path=games/Retro-bowl/index.html
+icon=games/Retro-bowl/icon.png
+version=Offline HTML build
+description=The throwback football game everybody kept coming back to: run the franchise, call the plays and win the Bowl with a roster of pixelated legends.
+tags=Sports, Football, Management, Mouse only, Pixel art
+hero=true
+
+[game]
+id=pac-man
+title=Pac-Man
+path=games/Pac-man/index.html
+icon=games/Pac-man/icon.png
+version=Offline HTML build
+description=The arcade classic: clear the maze, dodge the ghosts and chase the high score, packed to run straight in the browser.
+tags=Arcade, Classic, Maze, Keyboard required
+hero=true
+
+[game]
+id=football-bros
+title=Football Bros
+path=games/Football-bros/index.html
+icon=games/Football-bros/icon.png
+version=Offline HTML build
+description=Bone-crushing hits and long bombs. A fast, simple football game with franchise mode, local two-player and online matches.
+tags=Sports, Football, Multiplayer, Keyboard required
+hero=true
+
+[game]
+id=geometry-dash-lite
+title=Geometry Dash Lite
+path=games/Geometry-Dash-Lite/index.html
+icon=games/Geometry-Dash-Lite/icon.png
+version=Offline HTML build
+description=One button, one rhythm: jump the spikes, ride the walls and try not to blink in this neon auto-runner.
+tags=Rhythm, Platformer, One button, Keyboard required
+hero=true
+
+[game]
+id=backrooms
+title=Backrooms
+path=games/Backrooms/index.html
+icon=games/Backrooms/icon.png
+version=Offline HTML build
+description=Noclip out of reality and wander the endless yellow corridors. Explore, keep your nerve and try to find a way out.
+tags=Horror, First person, Exploration, Keyboard required, 3D
+hero=true
+
+[game]
+id=flappy-bird
+title=Flappy Bird
+path=games/Flappy-bird/index.html
+icon=games/Flappy-bird/icon.png
+version=Offline HTML build
+description=Tap to flap, thread the pipes and see how far you can get in the game that made everybody's thumb hurt.
+tags=Arcade, Endless runner, One button, Mouse only
+hero=false
+
+[game]
+id=drift-boss
+title=Drift Boss
+path=games/Drift-boss/index.html
+icon=games/Drift-boss/icon.png
+version=Offline HTML build
+description=One-button drifting: hold to swing the car around the corner and keep it on the platform for as long as you can.
+tags=Racing, Arcade, One button, Mouse only
+hero=false
+
+[game]
+id=bloxorz
+title=Bloxorz
+path=games/Bloxorz/index.html
+icon=games/Bloxorz/icon.png
+version=Offline HTML build
+description=Roll the block, find the hole, do not fall off the edge. A brain-bending Flash puzzler, emulated here so it still runs.
+tags=Puzzle, Flash, Keyboard required
+hero=false
+
+[game]
+id=minesweeper
+title=Minesweeper
+path=games/Minesweeper/index.html
+icon=games/Minesweeper/icon.png
+version=Offline HTML build
+description=The timeless logic puzzle: flag the mines, clear the board and try not to click the wrong square.
+tags=Puzzle, Classic, Mouse only
+hero=false
+
+[game]
+id=google-dino
+title=Google Dino
+path=games/Google-dino/index.html
+icon=games/Google-dino/icon.png
+version=Offline HTML build
+description=The T-Rex runner that shows up when the internet does not. Jump, duck and sprint towards a new high score.
+tags=Endless runner, Classic, Keyboard required, One button
+hero=false
+
 
 
 

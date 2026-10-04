@@ -21,4 +21,10 @@ available=true
 id=FNAFS
 title=FNAF games
 games=FNAF-1, FNAF-2, FNAF-3, FNAF-4, FNAF-SL
+
+[folder]
+available=true
+id=Offline-games-pack
+title=Offline games pack
+games=kart-bros, retro-bowl, football-bros, pac-man, geometry-dash-lite, flappy-bird, drift-boss, backrooms, bloxorz, minesweeper, google-dino
 `;
