@@ -239,6 +239,12 @@ saves (Retro Bowl, Minesweeper, Football Bros) continue to work in the browser.
 Card art for these eleven is a screenshot of each game's own title screen,
 captured at the catalog's 1272×787.
 
+A couple of the builds also probe files that the single-file exports never
+shipped — Retro Bowl asks for `/js/all.js` and `html/settings/js/index.js` at
+the server root, Backrooms asks for a relative `ee`. Those are upstream
+behaviour, they stay inside this origin and 404 harmlessly, and they do not
+affect play.
+
 ## Repo notes
 
 **The bundled games are binary blobs.** A build such as the FNAF pages or
