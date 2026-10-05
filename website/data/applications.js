@@ -237,23 +237,14 @@ description=The T-Rex runner that shows up when the internet does not. Jump, duc
 tags=Endless runner, Classic, Keyboard required, One button
 hero=false
 
-
-
-
-
-
-
-
-# TEST GAME: remove this entry block and website/games/index.html to remove the demo.
-[application]
 location=games
-id=test
-title=test
-path=games/index.html
-icon=assets/images/default-game.svg
-version=test
-description=test
-featured=false
-hero=false
+id=pongg
+title=pong
+path=games/pong/index.html
+icon=
+version=hh
+description=
+tags=
+hero=
 
 `;
