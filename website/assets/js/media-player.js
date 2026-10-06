@@ -94,19 +94,66 @@
     player = audio;
     reload.onclick = () => { audio.load(); };
   } else {
-    const video = document.createElement('video');
-    video.controls = true;
-    video.playsInline = true;
-    video.preload = 'metadata';
-    video.src = item.path;
-    if (item.icon) video.poster = art;
-    stage.className = 'media-stage-video';
-    stage.append(video);
-    player = video;
-    reload.onclick = () => { video.load(); };
-    // Autoplay is a nicety, not a requirement: browsers may refuse it.
-    const started = video.play();
-    if (started && started.catch) started.catch(() => { /* the controls are right there */ });
+    const isMKV = /\.mkv([?#]|$)/i.test(item.path);
+
+    // MKV: try mpegts.js (loaded from CDN in media.html).  If the library is
+    // not available or the codec still fails, fall through to the native
+    // <video> attempt, which Chrome may handle for VP8/VP9+Vorbis.
+    if (isMKV && window.mpegts && window.mpegts.isSupported()) {
+      const video = document.createElement('video');
+      video.controls = true;
+      video.playsInline = true;
+      if (item.icon) video.poster = art;
+      stage.className = 'media-stage-video';
+      stage.append(video);
+
+      try {
+        const mpegtsPlayer = mpegts.createPlayer({
+          type: 'mse',
+          isLive: false,
+          url: item.path,
+        });
+        mpegtsPlayer.attachMediaElement(video);
+        mpegtsPlayer.load();
+        player = video;
+
+        mpegtsPlayer.on(mpegts.Events.ERROR, () => {
+          showFallback(
+            'MKV codec not supported here',
+            'mpegts.js is loaded, but the codecs inside this MKV cannot be decoded in this browser. Re-encode to H.264/AAC in an .mp4, or try opening the file directly.',
+            item.path,
+          );
+        });
+
+        mpegtsPlayer.on(mpegts.Events.LOAD_MEDIA_INFO, () => {
+          // Metadata arrived — safe to try playing.
+          const started = video.play();
+          if (started?.catch) started.catch(() => {});
+        });
+
+        reload.onclick = () => {
+          if (mpegtsPlayer) { mpegtsPlayer.unload(); mpegtsPlayer.load(); }
+        };
+      } catch (_) {
+        // mpegts.js threw synchronously; fall through to native.
+      }
+    }
+
+    if (!player) {
+      const video = document.createElement('video');
+      video.controls = true;
+      video.playsInline = true;
+      video.preload = 'metadata';
+      video.src = item.path;
+      if (item.icon) video.poster = art;
+      stage.className = 'media-stage-video';
+      stage.append(video);
+      player = video;
+      reload.onclick = () => { video.load(); };
+      // Autoplay is a nicety, not a requirement: browsers may refuse it.
+      const started = video.play();
+      if (started && started.catch) started.catch(() => { /* the controls are right there */ });
+    }
   }
 
   fullscreen.disabled = item.kind === 'audio';
@@ -117,11 +164,26 @@
 
   // A codec the browser cannot play looks the same as a missing file, so say which it is.
   player?.addEventListener?.('error', () => {
-    showFallback(
-      'This browser cannot play that file',
-      'The file is there, but the format is not supported here. Re-encode it (H.264/AAC in an .mp4, or .mp3 for audio) or open it directly.',
-      item.path,
-    );
+    const isMKV = /\.mkv([?#]|$)/i.test(item.path);
+    if (isMKV && !window.mpegts) {
+      showFallback(
+        'MKV playback requires mpegts.js',
+        'This is an .mkv file. Load the page online once so mpegts.js can download, then try again. Alternatively, re-encode the file to H.264/AAC in an .mp4 or open it directly.',
+        item.path,
+      );
+    } else if (isMKV) {
+      showFallback(
+        'MKV codec not supported here',
+        'mpegts.js is loaded, but the codecs inside this MKV cannot be decoded in this browser. Re-encode to H.264/AAC in an .mp4, or try opening the file directly.',
+        item.path,
+      );
+    } else {
+      showFallback(
+        'This browser cannot play that file',
+        'The file is there, but the format is not supported here. Re-encode it (H.264/AAC in an .mp4, or .mp3 for audio) or open it directly.',
+        item.path,
+      );
+    }
   });
 
   /* ---------- Details ---------- */
