@@ -6,6 +6,29 @@
  * Variant A: the player keeps #mediaInfo and #mediaMore.
  */
 
+/* ---------- Library page back link ---------- */
+
+.library-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--flix-muted);
+  text-decoration: none;
+  font-size: 90%;
+  margin-bottom: 4px;
+  transition: color 150ms ease;
+}
+
+.library-back:hover {
+  color: #fff;
+  opacity: 1;
+}
+
+.library-back .icon {
+  width: 18px;
+  height: 18px;
+}
+
 /* ---------- Player page (website/media.html) ---------- */
 
 .media-body {
