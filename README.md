@@ -173,7 +173,7 @@ and the files to remove it.
 | `website/games/Five-nights-at-Freddys/` | FNAF 1–4 and Sister Location | full builds, playable |
 | `website/games/Baldis-basics/` | Baldi's Basics | placeholder page, in the catalog |
 | `website/games/Spacebar-clicker/` | Spacebar Clicker | placeholder page, in the catalog |
-| `website/games/{Kart-bros,Football-bros,Retro-bowl,Pac-man,Geometry-Dash-Lite,Flappy-bird,Google-dino,Drift-boss,Backrooms,Bloxorz,Minesweeper}/` | Offline games pack | full builds, playable |
+| `website/games/{Kart-bros,Football-bros,Retro-bowl,Pac-man,Geometry-Dash-Lite,Flappy-bird,Google-dino,Drift-boss,Backrooms,Bloxorz,Minesweeper,Granny}/` | Offline games pack | full builds, playable |
 | `website/games/index.html` | test entry (`id=test`) | placeholder page, not in a collection |
 | `website/games/gam temp/` | — | archived handoff file; not part of the site |
 | `website/media/music/` | three demo tracks (mp3 + cover art) | generated placeholders, in the media catalog |
@@ -280,10 +280,10 @@ version dropdown and the Play button follow that manifest automatically.
 
 ## Offline games pack
 
-`website/games/` also carries eleven standalone builds from the
+`website/games/` also carries twelve standalone builds from the
 [Offline-HTML-Games-Pack](https://github.com/CoolDude2349/Offline-HTML-Games-Pack):
 Kart Bros, Football Bros, Retro Bowl, Pac-Man, Geometry Dash Lite, Flappy Bird,
-Google Dino, Drift Boss, Backrooms, Bloxorz and Minesweeper. Each is one
+Google Dino, Drift Boss, Backrooms, Bloxorz, Minesweeper and Granny. Each is one
 self-contained HTML file in its own folder, so a game is one file plus its card
 art — no extra assets to chase.
 
@@ -301,8 +301,9 @@ the broken externals at local files:
 | Geometry Dash Lite | removed the `<base href="https://ixl.com/">` that pointed relative URLs at another site |
 | Pac-Man, Flappy Bird | removed the TurboWarp cloud-variable WebSocket provider |
 | Backrooms, Bloxorz, Retro Bowl, Minesweeper | vendored unchanged apart from the offline guard |
+| Granny | vendored unchanged apart from the offline guard; a Unity WebGL build whose audio, WASM and data ship as one embedded zip |
 
-Every one of the eleven additionally gets the same **offline guard** near the
+Every one of the twelve additionally gets the same **offline guard** near the
 top of the page: a short script that drops any request which would leave the
 arcade's own origin (http/https/ws/wss to another host) while letting local
 files, `blob:` URLs and `data:` URLs through untouched. That is what keeps the
@@ -310,26 +311,43 @@ builds honest with the "nothing reaches the network at runtime" rule below —
 Unity analytics beacons, TurboWarp cloud variables, the football game's server
 pings and Firebase sign-in are inert rather than merely failing. None of this
 touches the game payload itself: engine code inside each build is unmodified,
-and the guard is the only thing added to four of the eleven files.
+and the guard is the only thing added to five of the twelve files.
 
 Features that genuinely need the internet are unavailable offline, and say so
 on screen: online multiplayer in Kart Bros and Football Bros, Google sign-in in
 Football Bros, and cloud-variable leaderboards in the TurboWarp builds. Local
 saves (Retro Bowl, Minesweeper, Football Bros) continue to work in the browser.
-Card art for these eleven is a screenshot of each game's own title screen,
-captured at the catalog's 1272×787.
+Most pack-game card art is a screenshot of its own title screen, captured at
+the catalog's 1272×787. Backrooms and Bloxorz use the shared fallback artwork
+because their individual icons are not present in this checkout.
 
 A couple of the builds also probe files that the single-file exports never
 shipped — Retro Bowl asks for `/js/all.js` and `html/settings/js/index.js` at
-the server root, Backrooms asks for a relative `ee`. Those are upstream
-behaviour, they stay inside this origin and 404 harmlessly, and they do not
-affect play.
+the server root, Backrooms asks for a relative `ee`, and Granny's page asks for
+the three Unity loading-bar PNGs it never included
+(`unity-logo-dark.png`, `progress-bar-empty-dark.png`,
+`progress-bar-full-dark.png`). One Granny UI beep is also requested as a
+percent-encoded `StreamingAssets/…` path that the packer's blob rewriter does
+not match, so that one sound silently never plays. Those are upstream
+behaviour, they stay inside this origin, and they do not affect play.
+
+Granny is the odd one out among the twelve: it is a Unity WebGL build, and its
+single file carries the whole game — the framework, the 34 MB WASM, the 37 MB
+data payload and every sound — inside one base64 zip that the page unpacks on
+load and hands to Unity through `blob:` URLs. Nothing is fetched from anywhere,
+and the packer's Yandex Games stub (ads, device type) is local code in the same
+file; `player.getPlayer()` is declared but never called. The build keeps three
+upstream quirks: the unpacking makes the first load a few seconds long, its
+`#logo` screen-size check runs before that element exists (one console error,
+nothing more), and its MP3s want a browser with MP3 support — a headless
+Chromium without proprietary codecs logs decode errors but still plays.
 
 ## Repo notes
 
-**The bundled games are binary blobs.** A build such as the FNAF pages or
-Ampler Launcher's `website/mc/<id>/index.html` is a single 15–60 MB file whose
-payload legitimately contains CRLF byte pairs. Normalising line endings
+**The bundled games are binary blobs.** A build such as the FNAF pages,
+Ampler Launcher's `website/mc/<id>/index.html` or Granny's
+`website/games/Granny/index.html` (58 MB, almost all of it the embedded zip) is
+a single 15–60 MB file whose payload legitimately contains CRLF byte pairs. Normalising line endings
 corrupts the archive and the game fails to boot, with no warning at runtime.
 `.gitattributes` therefore marks exactly those builds `-text -diff`, with the
 rule deliberately ordered last so nothing overrides it. The short `README.md`
@@ -346,7 +364,7 @@ lands in `website/media/`.
 local files. The
 only optional network use in the whole repo is Ampler Launcher's
 `website/server/fetch-server.sh`, which a human runs deliberately to fetch the
-multiplayer server jar; it is not part of the site. The eleven Offline games
+multiplayer server jar; it is not part of the site. The twelve Offline games
 pack builds carry the same rule with their own offline guard — see above.
 
 **Verify a change** by serving the repo (`python3 -m http.server 8000`) and
@@ -372,11 +390,13 @@ into a scratch folder or with `--no-save`, they are not part of the site.
 Eaglercraft and EaglerXServer by lax1dude and contributors; the Ampler Launcher
 UI and original game bundles come from
 [proton-arcade](https://github.com/proton-arcade). The Beta 1.3 and Alpha 1.2.6
-builds, and all eleven games in the Offline games pack, are sourced from
+builds, and all twelve games in the Offline games pack, are sourced from
 [CoolDude2349/Offline-HTML-Games-Pack](https://github.com/CoolDude2349/Offline-HTML-Games-Pack).
-The arcade card illustrations are original artwork; the pack games' card art is
-a screenshot of each game's own title screen. Games remain the property of
-their respective authors — this repository only serves them.
+The arcade card illustrations are original artwork; most pack games use a
+screenshot of their own title screen. Backrooms and Bloxorz use the shared
+fallback artwork because their individual icons are not in this checkout.
+Games remain the property of their respective authors — this repository only
+serves them.
 
 ### Catalog validation
 
@@ -385,7 +405,6 @@ validation warnings, catalog paths, media types and paths, and page asset
 references. Run `node website/tools/check-images.mjs` to audit catalog images
 (games and media) and file signatures.
 
-`check-catalog.mjs` currently fails on one pre-existing item: `index.html`,
-`website/game.html` and `website/media.html` all reference a `favicon.ico` that
-is not committed. The media checks print their own `PASS` lines before that
-point, so they can be read separately.
+Both checks are dependency-free and should pass on a clean checkout. Games
+without custom card art use the shared `assets/images/default-game.svg` fallback;
+the HTML pages use the shared SVG favicon under `website/assets/images/`.

@@ -27,5 +27,5 @@ applications=FNAF-1, FNAF-2, FNAF-3, FNAF-4, FNAF-SL
 available=true
 id=Offline-games-pack
 title=Offline games pack
-applications=kart-bros, retro-bowl, football-bros, pac-man, geometry-dash-lite, flappy-bird, drift-boss, backrooms, bloxorz, minesweeper, google-dino
+applications=kart-bros, retro-bowl, football-bros, pac-man, geometry-dash-lite, flappy-bird, drift-boss, backrooms, bloxorz, minesweeper, google-dino, granny
 `;
