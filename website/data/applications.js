@@ -176,7 +176,7 @@ location=games
 id=backrooms
 title=Backrooms
 path=games/Backrooms/index.html
-icon=games/Backrooms/icon.png
+icon=assets/images/default-game.svg
 version=Offline HTML build
 description=Noclip out of reality and wander the endless yellow corridors. Explore, keep your nerve and try to find a way out.
 tags=Horror, First person, Exploration, Keyboard required, 3D
@@ -209,7 +209,7 @@ location=games
 id=bloxorz
 title=Bloxorz
 path=games/Bloxorz/index.html
-icon=games/Bloxorz/icon.png
+icon=assets/images/default-game.svg
 version=Offline HTML build
 description=Roll the block, find the hole, do not fall off the edge. A brain-bending Flash puzzler, emulated here so it still runs.
 tags=Puzzle, Flash, Keyboard required
@@ -235,6 +235,17 @@ icon=games/Google-dino/icon.png
 version=Offline HTML build
 description=The T-Rex runner that shows up when the internet does not. Jump, duck and sprint towards a new high score.
 tags=Endless runner, Classic, Keyboard required, One button
+hero=false
+
+[application]
+location=games
+id=granny
+title=Granny
+path=games/Granny/index.html
+icon=games/Granny/icon.png
+version=Offline HTML build
+description=You wake up locked in Granny's house with five days to get out. She hears every door, every dropped plate and every footstep, so search quietly, remember where things are and find the way out before she finds you.
+tags=Horror, Survival, First person, Jump scare, Keyboard required, 3D
 hero=false
 
 [application]

@@ -216,11 +216,15 @@ for (const entry of records) {
             const committedPath = rel(file);
             if (!committed.has(committedPath))
                 catalogIssues.push((entry.id || 'unnamed game') + ': icon is not in HEAD (GitHub Pages would 404): ' + committedPath);
-            const bytes = imageBytes.get(file) || readFileSync(file);
-            const hash = createHash('sha256').update(bytes).digest('hex');
-            const prior = iconFingerprints.get(hash) || [];
-            prior.push((entry.id || 'unnamed game') + ' -> ' + committedPath);
-            iconFingerprints.set(hash, prior);
+            // The generic game fallback is intentionally shared by entries
+            // without custom card art; only compare custom catalog artwork.
+            if (committedPath !== 'website/assets/images/default-game.svg') {
+                const bytes = imageBytes.get(file) || readFileSync(file);
+                const hash = createHash('sha256').update(bytes).digest('hex');
+                const prior = iconFingerprints.get(hash) || [];
+                prior.push((entry.id || 'unnamed game') + ' -> ' + committedPath);
+                iconFingerprints.set(hash, prior);
+            }
         }
     }
 }

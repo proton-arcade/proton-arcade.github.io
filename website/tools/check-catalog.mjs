@@ -18,7 +18,7 @@ vm.runInNewContext(source('website/data/applications.js'), data);
 vm.runInNewContext(source('website/data/collections.js'), data);
 vm.runInNewContext(source('website/data/media.js'), data);
 const live = load(data.window.EXST_APPLICATIONS_TEXT, data.window.EXST_COLLECTIONS_TEXT, data.window.EXST_MEDIA_TEXT);
-assert.equal(live.EXST_APPLICATIONS.length, 20);
+assert.equal(live.EXST_APPLICATIONS.length, 21);
 assert.equal(live.EXST_COLLECTIONS.length, 3);
 assert.equal(live.EXST_MEDIA.length, 5);
 assert.equal(live.EXST_CATALOG_WARNINGS.length, 0);
@@ -81,8 +81,14 @@ for (const page of ['index.html', 'website/game.html', 'website/media.html']) {
   assert.ok(!/data\/(games|folders)\.js/.test(html));
 }
 // The pages that show media have to load the media catalog before the loader runs.
+// Inspect script src attributes, not raw text: page comments also mention the
+// loader and must not affect this ordering check.
 for (const page of ['index.html', 'website/media.html']) {
   const html = source(page);
-  assert.ok(html.indexOf('data/media.js') < html.indexOf('config-loader.js'), `${page}: data/media.js must load before config-loader.js`);
+  const scripts = [...html.matchAll(/<script\b[^>]*\bsrc=(?:"([^"]+)"|'([^']+)')[^>]*>/gi)]
+    .map((match) => match[1] || match[2]);
+  const mediaIndex = scripts.findIndex((src) => /(?:^|\/)data\/media\.js(?:[?#]|$)/.test(src));
+  const loaderIndex = scripts.findIndex((src) => /(?:^|\/)assets\/js\/config-loader\.js(?:[?#]|$)/.test(src));
+  assert.ok(mediaIndex >= 0 && loaderIndex >= 0 && mediaIndex < loaderIndex, `${page}: data/media.js must load before config-loader.js`);
 }
 console.log('PASS catalog: live data, locations, legacy syntax, comments, validation, media types and paths, empty data, and page asset references');
