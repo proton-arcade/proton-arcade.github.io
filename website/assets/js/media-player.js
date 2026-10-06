@@ -168,7 +168,7 @@
     const heading = document.createElement('h2');
     heading.textContent = item.genres[0] ? `More ${item.genres[0].toLowerCase()} ${item.type === 'music' ? 'tracks' : 'videos'}` : `More ${item.type === 'music' ? 'music' : 'videos'}`;
     const row = document.createElement('div');
-    row.className = 'row-posters media-posters';
+    row.className = 'row-posters';
     related.forEach((entry) => row.append(window.exstMediaCard(entry, `media.html?id=${encodeURIComponent(entry.id)}`)));
     more.append(heading, row);
     more.hidden = false;

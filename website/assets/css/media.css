@@ -1,347 +1,10 @@
-/* Exst Arcade — Media (videos and music).
- * Styles for the Media tab on index.html and for website/media.html, the
- * player page. Loaded after flix.css so it can reuse the row, chip, search-bar
- * and player-bar look and only add what media needs.
+/* Exst Arcade — Media player.
+ * Styles for the player page (website/media.html) and its sections.
+ * The Media tab on index.html uses the same flix.css classes as Tools and Search,
+ * so no extra page-level CSS is needed.
+ *
+ * Variant A: the player keeps #mediaInfo and #mediaMore.
  */
-
-/* ---------- Media page header (back + heading + Videos/Music switch) ---------- */
-
-.media-head {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 14px;
-}
-
-.media-back {
-  flex: 0 0 auto;
-  width: 42px;
-  height: 42px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  color: #fff !important;
-  background: #262626;
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  border-radius: 50%;
-}
-
-.media-back:hover {
-  background: rgba(255, 255, 255, 0.18);
-  opacity: 1;
-}
-
-.media-back .icon {
-  width: 22px;
-  height: 22px;
-}
-
-.media-heading {
-  flex: 1;
-  min-width: 0;
-}
-
-.media-heading h1 {
-  margin: 0 0 2px;
-}
-
-.media-heading .sub {
-  margin: 0;
-}
-
-.media-head-switch {
-  flex: 0 0 auto;
-  display: flex;
-  gap: 4px;
-  background: #262626;
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  border-radius: 999px;
-  padding: 3px;
-}
-
-.media-head-switch a {
-  color: #ddd !important;
-  text-decoration: none;
-  font-size: 85%;
-  padding: 6px 14px;
-  border-radius: 999px;
-}
-
-.media-head-switch a.active {
-  background: var(--flix-red);
-  color: #fff !important;
-  font-weight: 700;
-}
-
-/* ---------- Videos / Music picker ---------- */
-
-.media-picker {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 14px;
-  margin: 4px 0 8px;
-}
-
-.media-tile {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 6px;
-  padding: 22px 20px;
-  background: linear-gradient(150deg, #2b2b2b, #171717);
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  border-radius: 10px;
-  color: #fff !important;
-  text-decoration: none;
-  transition: transform 150ms ease, border-color 150ms ease;
-}
-
-.media-tile:hover {
-  opacity: 1;
-  transform: translateY(-2px);
-  border-color: var(--flix-red);
-}
-
-.media-tile .icon {
-  width: 34px;
-  height: 34px;
-  color: var(--flix-red);
-}
-
-.media-tile .tile-title {
-  font-size: 130%;
-  font-weight: 700;
-}
-
-.media-tile .tile-sub {
-  color: var(--flix-muted);
-  font-size: 90%;
-}
-
-/* ---------- Media cards ---------- */
-
-.media-card {
-  flex: 0 0 168px;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-  color: inherit;
-  text-decoration: none;
-  cursor: pointer;
-}
-
-.media-art {
-  position: relative;
-  display: block;
-  width: 100%;
-  border-radius: 6px;
-  overflow: hidden;
-  background: #252525;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-}
-
-.media-card.is-video .media-art {
-  aspect-ratio: 16 / 9;
-}
-
-.media-card.is-music .media-art {
-  aspect-ratio: 1 / 1;
-}
-
-.media-art img {
-  display: block;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.media-card:hover .media-art {
-  border-color: rgba(255, 255, 255, 0.35);
-}
-
-.media-play {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #fff;
-  background: rgba(0, 0, 0, 0.35);
-  opacity: 0;
-  transition: opacity 150ms ease;
-}
-
-.media-play svg {
-  width: 34px;
-  height: 34px;
-  filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.7));
-}
-
-.media-card:hover .media-play,
-.media-card:focus-visible .media-play {
-  opacity: 1;
-}
-
-.media-duration {
-  position: absolute;
-  right: 6px;
-  bottom: 6px;
-  padding: 1px 6px;
-  border-radius: 3px;
-  background: rgba(0, 0, 0, 0.75);
-  color: #fff;
-  font-size: 72%;
-  font-style: normal;
-  line-height: 1.5;
-}
-
-.media-card-title {
-  font-weight: 700;
-  font-size: 92%;
-  line-height: 1.3;
-  overflow: hidden;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-}
-
-.media-card-sub {
-  color: var(--flix-muted);
-  font-size: 78%;
-  line-height: 1.3;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-/* Rows of media cards reuse the home page's scrolling row layout. */
-.media-posters {
-  align-items: flex-start;
-}
-
-.media-posters .media-card {
-  flex: 0 0 168px;
-  max-width: 168px;
-}
-
-.media-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-  gap: 14px 12px;
-  align-items: start;
-}
-
-.media-grid .media-card {
-  flex: none;
-  width: 100%;
-  max-width: 220px;
-}
-
-@media (max-width: 520px) {
-  .media-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-  .media-posters .media-card,
-  .media-card {
-    flex-basis: 140px;
-    max-width: 140px;
-  }
-}
-
-/* ---------- List view ---------- */
-
-.media-list {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.media-list-item {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 8px 10px;
-  background: #1f1f1f;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 8px;
-  color: inherit;
-  text-decoration: none;
-}
-
-.media-list-item:hover {
-  opacity: 1;
-  border-color: rgba(255, 255, 255, 0.3);
-  background: #262626;
-}
-
-.media-list-item img {
-  flex: 0 0 auto;
-  width: 56px;
-  height: 56px;
-  object-fit: cover;
-  border-radius: 5px;
-  background: #252525;
-}
-
-.media-list-item.is-video img {
-  width: 84px;
-  height: 48px;
-}
-
-.media-list-text {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-}
-
-.media-list-text strong {
-  font-size: 100%;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.media-list-meta {
-  color: var(--flix-muted);
-  font-size: 82%;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.media-list-play {
-  flex: 0 0 auto;
-  width: 34px;
-  height: 34px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 50%;
-  background: var(--flix-red);
-  color: #fff;
-}
-
-.media-list-play svg {
-  width: 18px;
-  height: 18px;
-}
-
-/* ---------- Search page tweaks ---------- */
-
-.sort-spacer {
-  flex: 1;
-}
-
-#searchMedia .flix-row > h2 {
-  margin-top: 28px;
-}
-
-#searchMedia .row-posters {
-  padding-left: 0;
-}
 
 /* ---------- Player page (website/media.html) ---------- */
 
@@ -389,7 +52,7 @@
 }
 
 .media-stage-audio {
-  background: linear-gradient(180deg, #141414, #000 60%);
+  background: #141414;
   padding: 36px 20px 12px;
 }
 
@@ -434,7 +97,8 @@
   display: block;
 }
 
-/* Details under the player. */
+/* ---------- Details under the player ---------- */
+
 .media-info {
   max-width: 900px;
   margin: 0 auto;
@@ -490,9 +154,7 @@
   margin: 18px 0 10px;
 }
 
-/* ---------- Narrow screens ----------
- * The bottom bar now carries five buttons, and the media pages stack their
- * header, switch and details, so give them room on a phone. */
+/* ---------- Narrow screens ---------- */
 
 @media (max-width: 480px) {
   #footerBar button {
@@ -508,19 +170,6 @@
     height: 24px;
   }
 
-  .media-head {
-    flex-wrap: wrap;
-  }
-
-  .media-head-switch {
-    width: 100%;
-    justify-content: center;
-  }
-
-  .media-picker {
-    grid-template-columns: 1fr;
-  }
-
   .media-facts {
     grid-template-columns: 1fr;
     gap: 0;
@@ -534,11 +183,5 @@
   .player-actions a {
     padding: 7px 9px;
     font-size: 78%;
-  }
-
-  .media-list-item img,
-  .media-list-item.is-video img {
-    width: 52px;
-    height: 52px;
   }
 }
