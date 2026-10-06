@@ -5,6 +5,13 @@
   function readPreference(key, fallback) {
     try { return localStorage.getItem(key) || fallback; } catch (_) { return fallback; }
   }
+  // Prefs → "Open application?": the about:blank tab is written by open-blank.js,
+  // which is loaded before this file; a plain new tab is the fallback.
+  function openBlank(url, title) {
+    if (window.exstOpenBlank) return window.exstOpenBlank(url, title);
+    window.open(url, '_blank', 'noopener');
+    return false;
+  }
   const rows = document.getElementById('rows');
   const grid = document.getElementById('searchGrid');
   const storageKey = 'exstHomeSections';
@@ -268,12 +275,12 @@
     const game = catalog.find((item) => item.id === button.dataset.play); if (!game) return;
     const mode = readPreference('openMode', 'page');
     const url = `website/${game.path}`;
+    const wrapper = game.location === 'tools' ? 'tool.html' : 'game.html';
+    const player = `website/${wrapper}?id=${encodeURIComponent(game.id)}`;
     if (mode === 'same') location.href = url;
+    else if (mode === 'blank') openBlank(player, game.title);
     else if (mode === 'new') window.open(url, '_blank', 'noopener');
-    else {
-      const wrapper = game.location === 'tools' ? 'tool.html' : 'game.html';
-      location.href = `website/${wrapper}?id=${encodeURIComponent(game.id)}`;
-    }
+    else location.href = player;
   });
   document.getElementById('openMode')?.addEventListener('change', (event) => { try { localStorage.setItem('openMode', event.target.value); } catch (_) { /* storage may be blocked */ } });
   const mode = document.getElementById('openMode'); if (mode) mode.value = readPreference('openMode', 'page');
