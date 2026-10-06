@@ -237,7 +237,13 @@
               <option value="page">Open in the player</option>
               <option value="same">Replace this tab</option>
               <option value="new">Open in a new tab</option>
+              <option value="blank">Open in an about:blank page</option>
             </select>
+            <p class="hint">
+              about:blank opens a new tab that keeps about:blank in the address
+              bar, with the player framed inside it. If the browser blocks the
+              tab, the player opens here instead.
+            </p>
           </div>
           <button class="primary-button" id="editSections" type="button">Edit home sections</button>
         </div>
@@ -320,6 +326,7 @@
     <script src="website/data/media.js"></script>
     <script src="website/assets/js/icons.js"></script>
     <script src="website/assets/js/config-loader.js"></script>
+    <script src="website/assets/js/open-blank.js"></script>
     <script src="website/assets/js/flix.js"></script>
     <script src="website/assets/js/media-library.js"></script>
   </body>

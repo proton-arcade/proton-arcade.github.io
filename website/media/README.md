@@ -73,7 +73,9 @@ So a music video filed as `type=video` still plays in the video tag, and an
   "more like this" row.
 
 The `openMode` preference in **prefs** applies to media too: open in the player
-(default), replace this tab with the file itself, or open in a new tab.
+(default), replace this tab with the file itself, open in a new tab, or open it
+in an about:blank tab (`assets/js/open-blank.js` writes a page whose address bar
+keeps showing `about:blank` and frames the player inside it).
 
 ## File sizes
 
