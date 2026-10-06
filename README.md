@@ -2,17 +2,20 @@
 
 A static game arcade that runs on GitHub Pages (this repository is the
 `proton-arcade.github.io` site, so `main` is what gets served). One home page
-with a hero cover and collections, one player page with a full-screen frame,
-and every game bundled in this repository — no build step, no backend, no
-package manager.
+with a hero cover and collections, a Media tab for videos and music, one player
+page per kind of thing (a full-screen frame for games, a video/audio player for
+media), and every game and media file bundled in this repository — no build
+step, no backend, no package manager.
 
 Open it and press play. That is the whole product.
 
 ```
-index.html              home (hero + collections + browse)
-website/game.html       player page (loads ?id=… in a full-screen frame)
-website/data/*.js       the catalog — plain text, edit by hand
+index.html              home (hero + collections + browse) and the Tools, Media, Search and prefs tabs
+website/game.html       game player page (loads ?id=… in a full-screen frame)
+website/media.html      media player page (loads ?id=… as a video, a track or a framed page)
+website/data/*.js       the catalogs — plain text, edit by hand
 website/games/          one folder per game
+website/media/          videos/ and music/, one file per item
 website/assets/         shared CSS, JS, icons, fallback art
 ```
 
@@ -31,8 +34,9 @@ server, see below.)
 
 ## The catalog
 
-Two files, both plain text read by `website/assets/js/config-loader.js`.
-Neither needs a rebuild — edit, reload, done.
+Three files, all plain text read by `website/assets/js/config-loader.js`:
+`applications.js` (games and tools), `collections.js` (home-page rows) and
+`media.js` (videos and music). None needs a rebuild — edit, reload, done.
 
 `website/data/applications.js` — one `[application]` block per game or tool:
 
@@ -95,6 +99,72 @@ Set `available=false` to hide a collection without deleting its games.
 The player page shows a "That application file is missing" panel with the exact path
 it expected if step 1 and step 2 disagree.
 
+## Media (videos and music)
+
+The **Media** tab in the bottom bar is a page of its own: a back arrow, two
+shelves (**Videos** and **Music**), and inside each shelf a search box, genre
+chips, a sort menu and a posters/list browse switch. With nothing typed, a shelf
+browses in rows — "All videos", then one row per genre, like the home page.
+Typing searches the title, artist or channel, album, genre, year and
+description, and every word has to match, so `proton chill` finds the artist and
+the genre at once. Matching media also turn up on the **Search** tab in a
+"Videos & music" row.
+
+Clicking an item opens `website/media.html?id=…`: a video plays full-bleed in a
+video tag, a track plays in a now-playing panel with its cover art, and an
+`.html` path is framed. The page has a back arrow to the right shelf, fullscreen,
+reload, a direct link, the item's details and a "more like this" row. The
+`openMode` preference in **prefs** applies here too.
+
+Adding media is the same job as adding a game: drop the file in
+`website/media/videos/` or `website/media/music/`, then add one block to
+`website/data/media.js`.
+
+```
+[media]
+type=music
+id=late-night-loop
+title=Late Night Loop
+artist=Exst Arcade
+album=Demo Tapes
+path=media/music/late-night-loop.mp3
+icon=media/music/late-night-loop.svg
+genre=Lo-fi, Chill
+year=2026
+duration=0:16
+description=Mellow chords over a soft beat.
+featured=true
+```
+
+| Field | Used for |
+|---|---|
+| `type` | `video` or `music`; which shelf it appears on. Optional — `[video]`, `[music]`, `[song]` and `[track]` block names set it, and a missing type is guessed from the extension |
+| `id` | the key used by `website/media.html?id=…` |
+| `title` | card title, player title |
+| `artist` | artist (music) or channel (video); `channel=` is accepted as an alias |
+| `album` | optional, music |
+| `path` | the media file, relative to `website/` |
+| `icon` | optional cover art or poster, relative to `website/`; falls back to `assets/images/default-music.svg` or `default-video.svg` |
+| `genre` | comma-separated; drives the chips, the browse rows and search. `tags=` is merged into it |
+| `year`, `duration` | optional text on cards and the player page |
+| `description` | optional text on the player page |
+| `featured` | `featured=true` puts the item on the Media landing page |
+| `available` | `available=false` hides the entry without deleting it |
+
+`type=` decides where an item is filed; the extension decides how it plays, so a
+music video filed as `type=video` still plays in the video tag. Supported files
+are `.mp4`/`.webm`/`.ogv`/`.mov` for video, `.mp3`/`.wav`/`.ogg`/`.m4a`/`.flac`/
+`.opus`/`.aac` for audio, and `.html` for a framed page. `website/media/README.md`
+covers the same ground, including the size limits GitHub puts on committed
+video. Invalid types, duplicate IDs and missing files produce catalog warnings
+on the page, and the player shows a "That media file is missing" panel with the
+exact path it expected.
+
+The five entries shipped in `data/media.js` — three short tracks and two short
+clips — are generated placeholders so the Media tab is not empty on a fresh
+clone. Overwrite a file in place to keep its catalog block, or delete the block
+and the files to remove it.
+
 ## What is in here
 
 | Path | Game | State |
@@ -106,6 +176,8 @@ it expected if step 1 and step 2 disagree.
 | `website/games/{Kart-bros,Football-bros,Retro-bowl,Pac-man,Geometry-Dash-Lite,Flappy-bird,Google-dino,Drift-boss,Backrooms,Bloxorz,Minesweeper}/` | Offline games pack | full builds, playable |
 | `website/games/index.html` | test entry (`id=test`) | placeholder page, not in a collection |
 | `website/games/gam temp/` | — | archived handoff file; not part of the site |
+| `website/media/music/` | three demo tracks (mp3 + cover art) | generated placeholders, in the media catalog |
+| `website/media/videos/` | two demo clips (mp4 + poster art) | generated placeholders, in the media catalog |
 
 The placeholder pages say so on the page itself. They are already wired into
 the catalog, so replacing the file in place when a build lands needs no catalog
@@ -264,17 +336,22 @@ rule deliberately ordered last so nothing overrides it. The short `README.md`
 provenance notes beside the two added builds have a later text/diffable rule.
 If you add another build that ships as one self-contained file, add its path to
 the binary rule — a blanket `website/games/**/index.html` would also swallow
-the small hand-written pages in that folder.
+the small hand-written pages in that folder. Media needs no rule of its own:
+the video and audio extensions (`.mp4`, `.webm`, `.mp3`, `.wav` and the rest)
+are marked binary by extension, so a new track or clip is safe as soon as it
+lands in `website/media/`.
 
-**Nothing reaches the network at runtime.** The catalog, the icons, the fonts
-(the launcher self-hosts Roboto) and the game builds are all local files. The
+**Nothing reaches the network at runtime.** The catalogs, the icons, the fonts
+(the launcher self-hosts Roboto), the game builds and the media library are all
+local files. The
 only optional network use in the whole repo is Ampler Launcher's
 `website/server/fetch-server.sh`, which a human runs deliberately to fetch the
 multiplayer server jar; it is not part of the site. The eleven Offline games
 pack builds carry the same rule with their own offline guard — see above.
 
 **Verify a change** by serving the repo (`python3 -m http.server 8000`) and
-walking the home page, a collection and a game. The repo also has a
+walking the home page, a collection, a game, the Media tab and a video or
+track. The repo also has a
 zero-dependency image/catalog audit; run it from the repo root, then run the
 launcher checks from the vendored launcher folder:
 
@@ -304,5 +381,11 @@ their respective authors — this repository only serves them.
 ### Catalog validation
 
 Run `node website/tools/check-catalog.mjs` to check locations, legacy syntax,
-validation warnings, catalog paths, and page asset references.
-Run `node website/tools/check-images.mjs` to audit catalog images and file signatures.
+validation warnings, catalog paths, media types and paths, and page asset
+references. Run `node website/tools/check-images.mjs` to audit catalog images
+(games and media) and file signatures.
+
+`check-catalog.mjs` currently fails on one pre-existing item: `index.html`,
+`website/game.html` and `website/media.html` all reference a `favicon.ico` that
+is not committed. The media checks print their own `PASS` lines before that
+point, so they can be read separately.

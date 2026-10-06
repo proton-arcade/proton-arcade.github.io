@@ -33,6 +33,23 @@ website/**/*.jpg   binary
 website/**/*.jpeg  binary
 website/**/*.svg   text eol=lf
 
+# Media library (website/media/): videos and music are opaque binaries, so no
+# line-ending conversion and no diffing. Cover art stays an image rule above.
+website/**/*.mp4   binary
+website/**/*.m4v   binary
+website/**/*.mov   binary
+website/**/*.webm  binary
+website/**/*.ogv   binary
+website/**/*.mp3   binary
+website/**/*.m4a   binary
+website/**/*.aac   binary
+website/**/*.wav   binary
+website/**/*.ogg   binary
+website/**/*.oga   binary
+website/**/*.opus  binary
+website/**/*.flac  binary
+website/**/*.weba  binary
+
 # LAST, so they win: the bundled game builds are opaque binaries. No diff, no
 # line-ending conversion, no text detection. Paths are listed one by one on
 # purpose - a blanket website/games/**/index.html would also swallow the small

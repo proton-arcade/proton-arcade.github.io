@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640">
+  <defs>
+    <linearGradient id="dusk" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#2b1055"/><stop offset="0.45" stop-color="#7b2d6b"/><stop offset="0.75" stop-color="#e2593f"/><stop offset="1" stop-color="#ffb347"/>
+    </linearGradient>
+    <linearGradient id="sun" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#fff2a8"/><stop offset="1" stop-color="#ff6a4d"/>
+    </linearGradient>
+  </defs>
+  <rect width="640" height="640" fill="url(#dusk)"/>
+  <circle cx="320" cy="300" r="132" fill="url(#sun)"/>
+  <g fill="#2b1055" opacity="0.55">
+    <rect x="188" y="264" width="264" height="10"/><rect x="188" y="292" width="264" height="12"/>
+    <rect x="188" y="322" width="264" height="14"/><rect x="188" y="356" width="264" height="16"/>
+  </g>
+  <rect x="0" y="400" width="640" height="240" fill="#1a0b33"/>
+  <g stroke="#ff5fa2" stroke-width="3" opacity="0.85">
+    <path d="M320 400 320 640M320 400 180 640M320 400 460 640M320 400 40 640M320 400 600 640M320 400-100 640M320 400 740 640"/>
+    <path d="M0 424h640M0 456h640M0 500h640M0 560h640M0 632h640"/>
+  </g>
+  <text x="320" y="150" text-anchor="middle" fill="#fff3d6" font-family="sans-serif" font-size="48" font-weight="bold" letter-spacing="3">Sunrise</text>
+  <text x="320" y="200" text-anchor="middle" fill="#ffd6e8" font-family="sans-serif" font-size="34" letter-spacing="12">DRIVE</text>
+</svg>

@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#121212" />
+    <title>Media — Exst Arcade</title>
+    <meta
+      name="description"
+      content="Video and music player page with a back arrow and the media library behind it."
+    />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Exst Arcade" />
+    <meta property="og:title" content="Media — Exst Arcade" />
+    <meta
+      property="og:description"
+      content="Press play. The video or track opens right here."
+    />
+    <link
+      rel="icon"
+      href="assets/images/favicon.svg?v=red-2"
+      type="image/svg+xml"
+    />
+    <link
+      rel="apple-touch-icon"
+      href="assets/images/favicon.svg?v=red-2"
+    />
+    <link rel="icon" href="../favicon.ico?v=red-2" sizes="16x16 32x32 48x48" />
+    <link rel="stylesheet" href="assets/css/arcade.css" />
+    <link rel="stylesheet" href="assets/css/flix.css" />
+    <link rel="stylesheet" href="assets/css/media.css" />
+  </head>
+  <body class="player-body media-body">
+    <noscript>
+      <p style="padding: 1rem; text-align: center">
+        The media player needs JavaScript. Please enable JavaScript and reload
+        this page.
+      </p>
+    </noscript>
+    <header class="player-bar">
+      <a
+        id="backLink"
+        class="back-button"
+        href="../index.html#media"
+        aria-label="Back to media"
+        >←</a
+      >
+      <a class="flix-mini-logo" href="../index.html">ExstArcade</a>
+      <div class="player-title">
+        <h1 id="mediaTitle">Loading media…</h1><span id="mediaMeta"></span>
+      </div>
+      <div class="player-actions">
+        <button id="fullscreenMedia" type="button">Fullscreen</button>
+        <button id="reloadMedia" type="button">Reload</button>
+        <a id="openDirect" target="_blank" rel="noopener">Open new tab</a>
+      </div>
+    </header>
+    <main class="media-shell">
+      <!-- Populated when a catalog edit needs attention (see config-loader.js). -->
+      <div id="mediaNotice"></div>
+      <!-- The video, the track, or a framed page: built by media-player.js. -->
+      <div id="mediaStage"></div>
+      <section id="mediaInfo" class="media-info" hidden></section>
+      <section id="mediaMore" class="media-more" hidden></section>
+      <section id="mediaFallback" class="frame-fallback" hidden>
+        <h1 id="mediaFallbackTitle">That media file is missing</h1>
+        <p id="mediaFallbackText">
+          The catalog points at the file below (relative to the
+          <code>website/</code> folder), but it is not there. Drop the media file
+          in that spot, or fix the <code>path=</code> line in
+          <code>data/media.js</code>.
+        </p>
+        <code id="missingPath"></code>
+      </section>
+    </main>
+    <script src="data/media.js"></script>
+    <script src="assets/js/icons.js"></script>
+    <script src="assets/js/config-loader.js"></script>
+    <script src="assets/js/media-library.js"></script>
+    <script src="assets/js/media-player.js"></script>
+  </body>
+</html>
