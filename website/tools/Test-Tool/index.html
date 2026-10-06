@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#121212" />
+    <title>Test Tool — Exst Arcade</title>
+    <link
+      rel="icon"
+      href="../../assets/images/favicon.svg?v=red-2"
+      type="image/svg+xml"
+    />
+    <link
+      rel="apple-touch-icon"
+      href="../../assets/images/favicon.svg?v=red-2"
+    />
+    <link rel="icon" href="../../favicon.ico?v=red-2" sizes="16x16 32x32 48x48" />
+    <link rel="stylesheet" href="../../assets/css/arcade.css" />
+    <style>
+      body { background: #121212; color: #e0e0e0; font-family: system-ui, sans-serif; margin: 0; padding: 0; }
+      .tool-header {
+        display: flex; align-items: center; gap: 10px;
+        padding: 10px 16px; background: #1a1a1a;
+        border-bottom: 1px solid rgba(255,255,255,0.1);
+      }
+      .tool-header a { color: #fff; text-decoration: none; font-size: 20px; }
+      .tool-header h1 { margin: 0; font-size: 1rem; }
+      .tool-body { max-width: 520px; margin: 32px auto; padding: 0 20px; }
+      .status {
+        display: inline-block; padding: 6px 14px; border-radius: 999px;
+        font-size: 85%; font-weight: 700; margin-bottom: 20px;
+      }
+      .status.ok { background: #1b3a1b; color: #7ce67c; }
+      table { width: 100%; border-collapse: collapse; font-size: 92%; }
+      th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid rgba(255,255,255,0.08); }
+      th { color: #888; width: 40%; }
+      .section-title { margin: 28px 0 10px; font-size: 110%; color: #aaa; }
+    </style>
+  </head>
+  <body>
+    <header class="tool-header">
+      <a href="../../index.html" aria-label="Back to Exst Arcade">←</a>
+      <h1>Test Tool</h1>
+    </header>
+    <main class="tool-body">
+      <span class="status ok">✓ Tool framework loaded</span>
+      <h2 class="section-title">Browser</h2>
+      <table>
+        <tr><th>User agent</th><td id="ua"></td></tr>
+        <tr><th>Platform</th><td id="platform"></td></tr>
+        <tr><th>Language</th><td id="lang"></td></tr>
+        <tr><th>Cookies</th><td id="cookies"></td></tr>
+        <tr><th>Online</th><td id="online"></td></tr>
+      </table>
+      <h2 class="section-title">Screen</h2>
+      <table>
+        <tr><th>Viewport</th><td id="viewport"></td></tr>
+        <tr><th>Screen</th><td id="screen"></td></tr>
+        <tr><th>Device pixel ratio</th><td id="dpr"></td></tr>
+        <tr><th>Color depth</th><td id="color"></td></tr>
+      </table>
+      <h2 class="section-title">Page context</h2>
+      <table>
+        <tr><th>Origin</th><td id="origin"></td></tr>
+        <tr><th>Protocol</th><td id="proto"></td></tr>
+        <tr><th>Iframe</th><td id="inIframe"></td></tr>
+      </table>
+    </main>
+    <script>
+      document.getElementById('ua').textContent = navigator.userAgent;
+      document.getElementById('platform').textContent = navigator.platform || '—';
+      document.getElementById('lang').textContent = navigator.language || '—';
+      document.getElementById('cookies').textContent = navigator.cookieEnabled ? 'Enabled' : 'Disabled';
+      document.getElementById('online').textContent = navigator.onLine ? 'Online' : 'Offline';
+      document.getElementById('viewport').textContent = innerWidth + ' × ' + innerHeight + ' px';
+      document.getElementById('screen').textContent = screen.width + ' × ' + screen.height + ' px';
+      document.getElementById('dpr').textContent = devicePixelRatio;
+      document.getElementById('color').textContent = screen.colorDepth + ' bit';
+      document.getElementById('origin').textContent = location.origin;
+      document.getElementById('proto').textContent = location.protocol;
+      document.getElementById('inIframe').textContent = window.self !== window.top ? 'Yes' : 'No';
+    </script>
+  </body>
+</html>

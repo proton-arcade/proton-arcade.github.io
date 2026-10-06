@@ -94,7 +94,7 @@
     });
 
   window.EXST_CATALOG_WARNINGS = warnings;
-  const notice = document.getElementById('catalogNotice') || document.getElementById('gameNotice') || document.getElementById('mediaNotice');
+  const notice = document.getElementById('catalogNotice') || document.getElementById('gameNotice') || document.getElementById('toolNotice') || document.getElementById('mediaNotice');
   if (notice && warnings.length) {
     notice.textContent = `Catalog needs attention: ${warnings.join(' ')}`;
     notice.setAttribute('role', 'status');

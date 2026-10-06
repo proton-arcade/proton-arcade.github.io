@@ -3,8 +3,11 @@ Media catalog — copy the template below for each video or track.
 Set type=video or type=music (no parentheses).
 Paths and icons are relative to website/; type does not change the path.
 Missing type is guessed from the file extension (.mp3/.wav/… = music).
-featured=true puts the item on the Media landing page.
+featured=true puts an item on the Media landing page.
 available=false hides an item without deleting it.
+Supported video formats: .mp4, .webm, .mkv (MKV via mpegts.js; needs one
+online load to cache the library, then works offline).
+Supported audio formats: .mp3, .wav, .ogg, .opus, .m4a, .aac, .flac.
 
 Template:
 [media]
@@ -76,7 +79,7 @@ icon=media/videos/neon-loop.svg
 genre=Motion, Loop
 year=2026
 duration=0:10
-description=Silent animated gradient. Demo clip — point path= at your own .mp4 or .webm to replace it.
+description=Silent animated gradient. Demo clip — point path= at your own .mp4, .webm or .mkv to replace it.
 featured=true
 
 [media]

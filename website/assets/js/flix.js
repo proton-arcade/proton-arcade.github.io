@@ -270,7 +270,10 @@
     const url = `website/${game.path}`;
     if (mode === 'same') location.href = url;
     else if (mode === 'new') window.open(url, '_blank', 'noopener');
-    else location.href = `website/game.html?id=${encodeURIComponent(game.id)}`;
+    else {
+      const wrapper = game.location === 'tools' ? 'tool.html' : 'game.html';
+      location.href = `website/${wrapper}?id=${encodeURIComponent(game.id)}`;
+    }
   });
   document.getElementById('openMode')?.addEventListener('change', (event) => { try { localStorage.setItem('openMode', event.target.value); } catch (_) { /* storage may be blocked */ } });
   const mode = document.getElementById('openMode'); if (mode) mode.value = readPreference('openMode', 'page');

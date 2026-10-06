@@ -237,4 +237,14 @@ description=The T-Rex runner that shows up when the internet does not. Jump, duc
 tags=Endless runner, Classic, Keyboard required, One button
 hero=false
 
+[application]
+location=tools
+id=test-tool
+title=Test Tool
+path=tools/Test-Tool/index.html
+icon=assets/images/default-game.svg
+version=1.0
+description=Info echo page: shows browser details, screen size and confirms the tool framework is working.
+tags=Diagnostic
+
 `;
