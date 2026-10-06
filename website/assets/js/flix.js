@@ -145,10 +145,16 @@
     const matches = catalog.filter((app) => app.title.toLowerCase().includes(query))
       .sort((a, b) => direction * a.title.localeCompare(b.title));
     grid.replaceChildren(...matches.map(makeCard));
-    document.getElementById('searchCount').textContent = `${matches.length} applications (games and tools)`;
-    document.getElementById('searchEmpty').hidden = matches.length > 0;
+    // Media (videos and music) answer the same query; media-library.js owns that row.
+    const mediaMatches = window.exstSearchMedia ? window.exstSearchMedia(query) : 0;
+    document.getElementById('searchCount').textContent = mediaMatches
+      ? `${matches.length} applications · ${mediaMatches} in media`
+      : `${matches.length} applications (games and tools)`;
+    document.getElementById('searchEmpty').hidden = matches.length + mediaMatches > 0;
   }
   renderSearch();
+  // media-library.js loads after this file; it re-runs the search once its hook exists.
+  window.exstRenderSearch = renderSearch;
   document.getElementById('searchInput').addEventListener('input', renderSearch);
   document.getElementById('sortSelect').addEventListener('change', renderSearch);
 
@@ -186,15 +192,21 @@
   });
   document.getElementById('closeSections')?.addEventListener('click', () => document.getElementById('sectionsDialog').close());
 
+  const SECTIONS = ['home', 'tools', 'media', 'search', 'about', 'notifications'];
   function navigate() {
-    const requested = location.hash.slice(1) || 'home';
-    const name = ['home', 'tools', 'search', 'about', 'notifications'].includes(requested) ? requested : 'home';
-    document.querySelectorAll('.flix-page').forEach((page) => { page.hidden = page.id !== `page-${name}`; });
+    const requested = (location.hash.slice(1) || 'home').toLowerCase();
+    const [section, sub] = requested.split('/');
+    const name = SECTIONS.includes(section) ? section : 'home';
+    // #media/videos and #media/music share one library page; #media is the picker.
+    const library = name === 'media' && ['videos', 'music'].includes(sub) ? sub : '';
+    const pageId = library ? 'page-media-library' : `page-${name}`;
+    document.querySelectorAll('.flix-page').forEach((page) => { page.hidden = page.id !== pageId; });
     document.querySelectorAll('#footerBar button').forEach((item) => {
       const active = item.getAttribute('ref') === name;
       item.classList.toggle('active', active);
       if (active) item.setAttribute('aria-current', 'page'); else item.removeAttribute('aria-current');
     });
+    document.dispatchEvent(new CustomEvent('exst:page', { detail: { name, library } }));
   }
   document.querySelectorAll('#footerBar button').forEach((button) => button.addEventListener('click', () => {
     location.hash = button.getAttribute('ref');

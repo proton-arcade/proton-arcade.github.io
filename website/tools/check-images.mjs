@@ -10,7 +10,7 @@
  *     node website/tools/check-images.mjs
  */
 
-import { readdirSync, readFileSync, statSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { dirname, extname, join, relative, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createHash } from 'node:crypto';
@@ -125,6 +125,24 @@ function catalogRecords() {
     }).filter((entry) => entry.id || entry.path || entry.icon);
 }
 
+function mediaRecords() {
+    const catalogPath = join(WEBSITE, 'data', 'media.js');
+    if (!existsSync(catalogPath)) return [];
+    const source = readFileSync(catalogPath, 'utf8');
+    const match = source.match(/window\.EXST_MEDIA_TEXT\s*=\s*`([\s\S]*?)`\s*;/);
+    if (!match) throw new Error('could not find window.EXST_MEDIA_TEXT template in ' + rel(catalogPath));
+
+    return match[1].split(/^\[(?:media|video|music|song|track)\]\s*$/m).slice(1).map((block) => {
+        const fields = {};
+        for (const line of block.split(/\r?\n/)) {
+            if (line.trim().startsWith('available=false')) fields.available = 'false';
+            const field = /^(id|path|icon)=(.*)$/.exec(line.trim());
+            if (field) fields[field[1]] = field[2].trim();
+        }
+        return fields;
+    }).filter((entry) => entry.id || entry.path || entry.icon);
+}
+
 const images = walk(WEBSITE);
 const imageBytes = new Map();
 const signatureIssues = [];
@@ -209,6 +227,48 @@ for (const entry of records) {
 if (catalogIssues.length) catalogIssues.forEach(bad);
 else ok(records.length + ' catalog entries: all ' + referenceCount + ' path/icon references exist and every icon is committed');
 
+// Media catalog: the file itself is required, cover art is optional (the
+// player falls back to assets/images/default-video.svg / default-music.svg).
+let mediaList = [];
+try { mediaList = mediaRecords(); }
+catch (error) { bad('could not read media catalog: ' + error.message); }
+const mediaIssues = [];
+let mediaReferences = 0;
+for (const entry of mediaList) {
+    if (!entry.id) mediaIssues.push('media entry is missing id');
+    if (entry.available === 'false') continue;
+    for (const key of ['path', 'icon']) {
+        const value = entry[key];
+        if (!value) {
+            if (key === 'path') mediaIssues.push((entry.id || 'unnamed media') + ': missing path= value');
+            continue;
+        }
+        mediaReferences++;
+        const file = resolve(WEBSITE, value);
+        if (file !== WEBSITE && !file.startsWith(WEBSITE + sep)) {
+            mediaIssues.push((entry.id || 'unnamed media') + ': ' + key + ' escapes website/: ' + value);
+            continue;
+        }
+        if (!statSafe(file)) {
+            mediaIssues.push((entry.id || 'unnamed media') + ': ' + key + ' does not exist: website/' + value);
+            continue;
+        }
+        if (key === 'icon') {
+            const committedPath = rel(file);
+            if (!committed.has(committedPath))
+                mediaIssues.push((entry.id || 'unnamed media') + ': icon is not in HEAD (GitHub Pages would 404): ' + committedPath);
+            const bytes = imageBytes.get(file) || readFileSync(file);
+            const hash = createHash('sha256').update(bytes).digest('hex');
+            const prior = iconFingerprints.get(hash) || [];
+            prior.push((entry.id || 'unnamed media') + ' -> ' + committedPath);
+            iconFingerprints.set(hash, prior);
+        }
+    }
+}
+if (mediaIssues.length) mediaIssues.forEach(bad);
+else if (mediaList.length) ok(mediaList.length + ' media entries: all ' + mediaReferences + ' path/icon references exist');
+else warn('no media entries in website/data/media.js');
+
 let duplicateGroups = 0;
 for (const matches of iconFingerprints.values()) {
     if (matches.length > 1) {
@@ -216,7 +276,7 @@ for (const matches of iconFingerprints.values()) {
         warn('identical icon content shared by catalog entries: ' + matches.join('; '));
     }
 }
-if (duplicateGroups === 0) ok('catalog games do not reuse identical icon bytes');
+if (duplicateGroups === 0) ok('catalog art (games and media) does not reuse identical icon bytes');
 else ok('duplicate-art warning emitted for ' + duplicateGroups + ' icon group(s)');
 
 console.log('\ncheck-images: passed ' + passed + ', failed ' + failed);
