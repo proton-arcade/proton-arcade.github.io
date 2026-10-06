@@ -242,16 +242,10 @@
     if (!target) return;
     const item = media.find((entry) => entry.id === target.dataset.media);
     if (!item) return;
-    const mode = (() => { try { return localStorage.getItem('openMode') || 'page'; } catch (_) { return 'page'; } })();
+    let mode = (() => { try { return localStorage.getItem('openMode') || 'page'; } catch (_) { return 'page'; } })();
+    if (!['page', 'same', 'new'].includes(mode)) mode = 'page'; // legacy about:blank value
     if (mode === 'page') return; // the card's own href already points at the player page
     event.preventDefault();
-    if (mode === 'blank') {
-      // target.href is the player page resolved for whichever page drew the
-      // card, so this works on the shelves and on the player's own rows.
-      if (window.exstOpenBlank) window.exstOpenBlank(target.href, item.title);
-      else window.open(target.href, '_blank', 'noopener');
-      return;
-    }
     const url = mode === 'same' ? `website/${item.path}` : playerUrl(item);
     if (mode === 'same') location.href = url;
     else window.open(url, '_blank', 'noopener');

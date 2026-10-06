@@ -109,13 +109,6 @@ The **prefs** tab in the bottom bar keeps its preferences in `localStorage`.
 | Open in the player | the in-page player (`website/game.html`, `tool.html` or `media.html`) with its back arrow, fullscreen and reload controls |
 | Replace this tab | the entry's own file, in this tab |
 | Open in a new tab | the entry's own file, in a new tab |
-| Open in an about:blank page | a new tab whose address bar keeps showing `about:blank`, with the player framed inside it |
-
-The about:blank tab is written by `website/assets/js/open-blank.js`: the window is
-opened without `noopener` so the opener can write a minimal page into it, and writing
-that page is what keeps the address bar on `about:blank`. Everything framed this way
-is a local file from this repository, so the frame stays same-origin. When the browser
-blocks the pop-up, the player opens in the current tab instead.
 
 ## Media (videos and music)
 
@@ -133,8 +126,7 @@ video tag, a track plays in a now-playing panel with its cover art, and an
 `.html` path is framed. The page has a back arrow to the right shelf, fullscreen,
 reload, a direct link, the item's details and a "more like this" row. The
 `openMode` preference in **prefs** applies here too: open in the player
-(default), replace this tab with the file itself, open in a new tab, or open it
-in an about:blank tab.
+(default), replace this tab with the file itself, or open it in a new tab.
 
 Adding media is the same job as adding a game: drop the file in
 `website/media/videos/` or `website/media/music/`, then add one block to
