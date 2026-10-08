@@ -1,15 +1,10 @@
 # Ampler Launcher
 
-A Minecraft-themed launcher for Eaglercraft that runs entirely offline.
-
-It is a **website**, not an app: plain HTML/CSS/JS with no build step, no
-backend and no installer. Open it in a browser and it works — online or off.
+A Minecraft-themed launcher for Eaglercraft
 
 ## Run it
 
 Open `index.html` in any browser. Pick a version, press Play.
-
-That is all. Nothing is downloaded and nothing phones home.
 
 Optionally, run the small local server if you want `SharedArrayBuffer` for the
 WASM builds or to play from another device on your LAN:
